@@ -1,0 +1,222 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlserver"
+}
+
+// ==========================================
+// NHÓM NGƯỜI DÙNG
+// ==========================================
+
+model User {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique @db.VarChar(50)
+  passwordHash String   @db.VarChar(255)
+  email        String   @unique @db.VarChar(100)
+  role         String   @db.VarChar(20)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  customer    Customer?
+  technician  Technician?
+  partImports PartImport[]
+  partExports PartExport[]
+}
+
+model Customer {
+  id          Int      @id @default(autoincrement())
+  userId      Int      @unique
+  fullName    String   @db.NVarChar(100)
+  phone       String   @db.VarChar(20)
+  address     String   @db.NVarChar(255)
+  companyName String?  @db.NVarChar(100)
+  createdAt   DateTime @default(now())
+
+  user              User               @relation(fields: [userId], references: [id])
+  devices           Device[]
+  warrantyContracts WarrantyContract[]
+  tickets           Ticket[]
+}
+
+model Technician {
+  id             Int      @id @default(autoincrement())
+  userId         Int      @unique
+  fullName       String   @db.NVarChar(100)
+  phone          String   @db.VarChar(20)
+  specialization String?  @db.NVarChar(100)
+  createdAt      DateTime @default(now())
+
+  user                 User                  @relation(fields: [userId], references: [id])
+  maintenanceRequests  MaintenanceRequest[]
+  maintenanceSchedules MaintenanceSchedule[]
+}
+
+// ==========================================
+// NHÓM THIẾT BỊ
+// ==========================================
+
+model DeviceCategory {
+  id          Int     @id @default(autoincrement())
+  name        String  @db.NVarChar(100)
+  description String? @db.NVarChar(255)
+
+  devices Device[]
+}
+
+model Device {
+  id           Int       @id @default(autoincrement())
+  categoryId   Int
+  customerId   Int
+  name         String    @db.NVarChar(100)
+  brand        String    @db.NVarChar(100)
+  model        String    @db.NVarChar(100)
+  serialNumber String    @unique @db.VarChar(100)
+  purchaseDate DateTime?
+  status       String    @default("active") @db.VarChar(20)
+  createdAt    DateTime  @default(now())
+
+  category             DeviceCategory        @relation(fields: [categoryId], references: [id])
+  customer             Customer              @relation(fields: [customerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  warrantyContracts    WarrantyContract[]
+  tickets              Ticket[]
+  maintenanceRequests  MaintenanceRequest[]
+  maintenanceSchedules MaintenanceSchedule[]
+}
+
+// ==========================================
+// NHÓM BẢO HÀNH
+// ==========================================
+
+model WarrantyContract {
+  id             Int      @id @default(autoincrement())
+  deviceId       Int
+  customerId     Int
+  contractNumber String   @unique @db.VarChar(50)
+  startDate      DateTime
+  endDate        DateTime
+  terms          String?  @db.NVarChar(Max)
+  status         String   @default("active") @db.VarChar(20)
+  createdAt      DateTime @default(now())
+
+  device   Device   @relation(fields: [deviceId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+// ==========================================
+// NHÓM TICKET & BẢO TRÌ
+// ==========================================
+
+model Ticket {
+  id          Int      @id @default(autoincrement())
+  customerId  Int
+  deviceId    Int
+  title       String   @db.NVarChar(200)
+  description String   @db.NVarChar(Max)
+  priority    String   @default("medium") @db.VarChar(20)
+  status      String   @default("pending") @db.VarChar(20)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  customer            Customer             @relation(fields: [customerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  device              Device               @relation(fields: [deviceId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  maintenanceRequests MaintenanceRequest[]
+}
+
+model MaintenanceRequest {
+  id           Int       @id @default(autoincrement())
+  ticketId     Int?
+  deviceId     Int
+  technicianId Int
+  description  String    @db.NVarChar(Max)
+  type         String    @db.VarChar(20)
+  status       String    @default("pending") @db.VarChar(20)
+  startedAt    DateTime?
+  completedAt  DateTime?
+  createdAt    DateTime  @default(now())
+
+  ticket      Ticket?    @relation(fields: [ticketId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  device      Device     @relation(fields: [deviceId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  technician  Technician @relation(fields: [technicianId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  partExports PartExport[]
+}
+
+model MaintenanceSchedule {
+  id            Int      @id @default(autoincrement())
+  deviceId      Int
+  technicianId  Int
+  scheduledDate DateTime
+  description   String?  @db.NVarChar(255)
+  status        String   @default("upcoming") @db.VarChar(20)
+  createdAt     DateTime @default(now())
+
+  device     Device     @relation(fields: [deviceId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  technician Technician @relation(fields: [technicianId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+// ==========================================
+// NHÓM KHO LINH KIỆN
+// ==========================================
+
+model Part {
+  id            Int     @id @default(autoincrement())
+  name          String  @db.NVarChar(100)
+  code          String  @unique @db.VarChar(50)
+  unit          String  @db.NVarChar(50)
+  stockQuantity Int     @default(0)
+  minQuantity   Int     @default(0)
+  description   String? @db.NVarChar(255)
+
+  importDetails PartImportDetail[]
+  exportDetails PartExportDetail[]
+}
+
+model PartImport {
+  id         Int      @id @default(autoincrement())
+  importCode String   @unique @db.VarChar(50)
+  importedBy Int
+  supplier   String   @db.NVarChar(100)
+  importDate DateTime
+  totalCost  Decimal  @db.Decimal(18, 2)
+  note       String?  @db.NVarChar(255)
+
+  user    User               @relation(fields: [importedBy], references: [id])
+  details PartImportDetail[]
+}
+
+model PartImportDetail {
+  id        Int     @id @default(autoincrement())
+  importId  Int
+  partId    Int
+  quantity  Int
+  unitPrice Decimal @db.Decimal(18, 2)
+
+  import PartImport @relation(fields: [importId], references: [id])
+  part   Part       @relation(fields: [partId], references: [id])
+}
+
+model PartExport {
+  id                   Int      @id @default(autoincrement())
+  exportCode           String   @unique @db.VarChar(50)
+  maintenanceRequestId Int
+  exportedBy           Int
+  exportDate           DateTime
+  note                 String?  @db.NVarChar(255)
+
+  maintenanceRequest MaintenanceRequest @relation(fields: [maintenanceRequestId], references: [id])
+  user               User               @relation(fields: [exportedBy], references: [id])
+  details            PartExportDetail[]
+}
+
+model PartExportDetail {
+  id        Int     @id @default(autoincrement())
+  exportId  Int
+  partId    Int
+  quantity  Int
+  unitPrice Decimal @db.Decimal(18, 2)
+
+  export PartExport @relation(fields: [exportId], references: [id])
+  part   Part       @relation(fields: [partId], references: [id])
+}
