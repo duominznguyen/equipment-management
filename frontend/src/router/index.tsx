@@ -6,6 +6,7 @@ import CustomerLayout from "@/components/layout/CustomerLayout";
 import LoginPage from "@/pages/auth/LoginPage";
 import DashboardPage from "@/pages/dashboard/DashboardPage";
 import UserListPage from "@/pages/users/UserListPage";
+import CustomerListPage from "@/pages/customers/CustomerListPage";
 import { useAuthStore } from "@/stores/auth.store";
 
 const RootRedirect = () => {
@@ -39,6 +40,7 @@ const router = createBrowserRouter([
     children: [
       { path: "dashboard", element: <DashboardPage /> },
       { path: "users", element: <UserListPage /> },
+      { path: "customers", element: <CustomerListPage /> },
       // Các route admin khác sẽ thêm vào đây
     ],
   },
@@ -84,8 +86,6 @@ const router = createBrowserRouter([
       </div>
     ),
   },
-
-  // Bỏ route * redirect về / để tránh vòng lặp
 ]);
 
 export default router;
