@@ -9,12 +9,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Separator } from "@/components/ui/separator";
+// import { Separator } from "@/components/ui/separator";
 import {
   LayoutDashboard,
   Users,
   Wrench,
-  FileText,
+  // FileText,
   AlertCircle,
   Calendar,
   Package,
@@ -24,8 +24,8 @@ import {
   X,
   ShieldCheck,
   Laptop,
-  PackagePlus,
-  PackageMinus,
+  // PackagePlus,
+  // PackageMinus,
   ChevronDown,
   ChevronRight,
 } from "lucide-react";

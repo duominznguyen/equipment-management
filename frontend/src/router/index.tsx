@@ -7,6 +7,7 @@ import LoginPage from "@/pages/auth/LoginPage";
 import DashboardPage from "@/pages/dashboard/DashboardPage";
 import UserListPage from "@/pages/users/UserListPage";
 import CustomerListPage from "@/pages/customers/CustomerListPage";
+import TechnicianListPage from "@/pages/technicians/TechnicianListPage";
 import { useAuthStore } from "@/stores/auth.store";
 
 const RootRedirect = () => {
@@ -41,6 +42,7 @@ const router = createBrowserRouter([
       { path: "dashboard", element: <DashboardPage /> },
       { path: "users", element: <UserListPage /> },
       { path: "customers", element: <CustomerListPage /> },
+      { path: "technicians", element: <TechnicianListPage /> },
       // Các route admin khác sẽ thêm vào đây
     ],
   },

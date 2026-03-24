@@ -3,13 +3,13 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createCustomer, updateCustomer } from "@/services/customer.service";
+import { createTechnician, updateTechnician } from "@/services/technician.service";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
-import type { Customer } from "@/types/customer.type";
+import type { Technician } from "@/types/technician.type";
 
 const createSchema = z.object({
   username: z.string().min(3, "Tối thiểu 3 ký tự"),
@@ -17,29 +17,24 @@ const createSchema = z.object({
   password: z.string().min(6, "Tối thiểu 6 ký tự"),
   fullName: z.string().min(1, "Vui lòng nhập họ tên"),
   phone: z.string().min(1, "Vui lòng nhập số điện thoại"),
-  address: z.string().min(1, "Vui lòng nhập địa chỉ"),
-  companyName: z.string().optional(),
+  specialization: z.string().optional(),
 });
 
 const editSchema = z.object({
   fullName: z.string().min(1, "Vui lòng nhập họ tên"),
   phone: z.string().min(1, "Vui lòng nhập số điện thoại"),
-  address: z.string().min(1, "Vui lòng nhập địa chỉ"),
-  companyName: z.string().optional(),
+  specialization: z.string().optional(),
 });
-
-// type CreateForm = z.infer<typeof createSchema>;
-type EditForm = z.infer<typeof editSchema>;
 
 interface Props {
   open: boolean;
   onClose: () => void;
-  customer?: Customer | null;
+  technician?: Technician | null;
 }
 
-const CustomerFormModal = ({ open, onClose, customer }: Props) => {
+const TechnicianFormModal = ({ open, onClose, technician }: Props) => {
   const queryClient = useQueryClient();
-  const isEdit = !!customer;
+  const isEdit = !!technician;
 
   const {
     register,
@@ -51,31 +46,30 @@ const CustomerFormModal = ({ open, onClose, customer }: Props) => {
   });
 
   useEffect(() => {
-    if (customer) {
+    if (technician) {
       reset({
-        fullName: customer.fullName,
-        phone: customer.phone,
-        address: customer.address,
-        companyName: customer.companyName || "",
+        fullName: technician.fullName,
+        phone: technician.phone,
+        specialization: technician.specialization || "",
       });
     } else {
       reset({});
     }
-  }, [customer, reset]);
+  }, [technician, reset]);
 
   const createMutation = useMutation({
-    mutationFn: createCustomer,
+    mutationFn: createTechnician,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["customers"] });
+      queryClient.invalidateQueries({ queryKey: ["technicians"] });
       reset();
       onClose();
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: EditForm) => updateCustomer(customer!.id, data),
+    mutationFn: (data: any) => updateTechnician(technician!.id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["customers"] });
+      queryClient.invalidateQueries({ queryKey: ["technicians"] });
       onClose();
     },
   });
@@ -100,7 +94,7 @@ const CustomerFormModal = ({ open, onClose, customer }: Props) => {
     >
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Chỉnh sửa khách hàng" : "Thêm khách hàng mới"}</DialogTitle>
+          <DialogTitle>{isEdit ? "Chỉnh sửa kỹ thuật viên" : "Thêm kỹ thuật viên mới"}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -124,7 +118,7 @@ const CustomerFormModal = ({ open, onClose, customer }: Props) => {
                 <Input type="password" placeholder="Nhập mật khẩu" {...register("password")} />
                 {errors.password && <p className="text-sm text-destructive">{errors.password.message as string}</p>}
               </div>
-              <p className="text-sm font-medium text-muted-foreground">Thông tin khách hàng</p>
+              <p className="text-sm font-medium text-muted-foreground">Thông tin kỹ thuật viên</p>
             </>
           )}
 
@@ -142,16 +136,10 @@ const CustomerFormModal = ({ open, onClose, customer }: Props) => {
           </div>
 
           <div className="space-y-2">
-            <Label>Địa chỉ</Label>
-            <Input placeholder="Nhập địa chỉ" {...register("address")} />
-            {errors.address && <p className="text-sm text-destructive">{errors.address.message as string}</p>}
-          </div>
-
-          <div className="space-y-2">
             <Label>
-              Công ty <span className="text-muted-foreground">(tuỳ chọn)</span>
+              Chuyên môn <span className="text-muted-foreground">(tuỳ chọn)</span>
             </Label>
-            <Input placeholder="Nhập tên công ty" {...register("companyName")} />
+            <Input placeholder="VD: Máy tính, Laptop, Máy in..." {...register("specialization")} />
           </div>
 
           {error && (
@@ -180,4 +168,4 @@ const CustomerFormModal = ({ open, onClose, customer }: Props) => {
   );
 };
 
-export default CustomerFormModal;
+export default TechnicianFormModal;
