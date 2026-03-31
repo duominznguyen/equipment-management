@@ -14,7 +14,7 @@ import DeviceListPage from "@/pages/devices/DeviceListPage";
 import WarrantyContractListPage from "@/pages/warranty-contracts/WarrantyContractListPage";
 import AdminTicketListPage from "@/pages/tickets/AdminTicketListPage";
 import CustomerTicketListPage from "@/pages/tickets/CustomerTicketListPage";
-
+import MaintenanceRequestListPage from "@/pages/maintenance-requests/MaintenanceRequestListPage";
 
 const RootRedirect = () => {
   const { token, user, isLoading } = useAuthStore();
@@ -53,6 +53,8 @@ const router = createBrowserRouter([
       { path: "devices", element: <DeviceListPage /> },
       { path: "warranty-contracts", element: <WarrantyContractListPage /> },
       { path: "tickets", element: <AdminTicketListPage /> },
+      { path: "maintenance-requests", element: <MaintenanceRequestListPage /> },
+
       // Các child route admin khác
     ],
   },
@@ -68,6 +70,7 @@ const router = createBrowserRouter([
     children: [
       // Trang mặc định khi vào /tech
       { index: true, element: <div className="p-4">Chào mừng Kỹ thuật viên!</div> },
+      { path: "maintenance-requests", element: <MaintenanceRequestListPage /> },
       // Các child route tech khác
     ],
   },
