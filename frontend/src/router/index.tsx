@@ -1,4 +1,5 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
+import { useAuthStore } from "@/stores/auth.store";
 import PrivateRoute from "@/components/PrivateRoute";
 import AdminLayout from "@/components/layout/AdminLayout";
 import TechnicianLayout from "@/components/layout/TechnicianLayout";
@@ -8,8 +9,8 @@ import DashboardPage from "@/pages/dashboard/DashboardPage";
 import UserListPage from "@/pages/users/UserListPage";
 import CustomerListPage from "@/pages/customers/CustomerListPage";
 import TechnicianListPage from "@/pages/technicians/TechnicianListPage";
-import { useAuthStore } from "@/stores/auth.store";
 import DeviceCategoryListPage from "@/pages/device-categories/DeviceCategoryListPage";
+import DeviceListPage from "@/pages/devices/DeviceListPage";
 
 const RootRedirect = () => {
   const { token, user, isLoading } = useAuthStore();
@@ -45,7 +46,8 @@ const router = createBrowserRouter([
       { path: "customers", element: <CustomerListPage /> },
       { path: "technicians", element: <TechnicianListPage /> },
       { path: "device-categories", element: <DeviceCategoryListPage /> },
-      // Các route admin khác sẽ thêm vào đây
+      { path: "devices", element: <DeviceListPage /> },
+      // Các child route admin khác
     ],
   },
 
@@ -60,7 +62,7 @@ const router = createBrowserRouter([
     children: [
       // Trang mặc định khi vào /tech
       { index: true, element: <div className="p-4">Chào mừng Kỹ thuật viên!</div> },
-      // Các route tech khác sẽ thêm vào đây
+      // Các child route tech khác
     ],
   },
 
@@ -75,7 +77,7 @@ const router = createBrowserRouter([
     children: [
       // Trang mặc định khi vào /my
       { index: true, element: <div className="p-4">Chào mừng Khách hàng!</div> },
-      // Các route customer khác sẽ thêm vào đây
+      // Các child route customer khác
     ],
   },
 
