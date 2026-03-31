@@ -12,6 +12,9 @@ import TechnicianListPage from "@/pages/technicians/TechnicianListPage";
 import DeviceCategoryListPage from "@/pages/device-categories/DeviceCategoryListPage";
 import DeviceListPage from "@/pages/devices/DeviceListPage";
 import WarrantyContractListPage from "@/pages/warranty-contracts/WarrantyContractListPage";
+import AdminTicketListPage from "@/pages/tickets/AdminTicketListPage";
+import CustomerTicketListPage from "@/pages/tickets/CustomerTicketListPage";
+
 
 const RootRedirect = () => {
   const { token, user, isLoading } = useAuthStore();
@@ -49,6 +52,7 @@ const router = createBrowserRouter([
       { path: "device-categories", element: <DeviceCategoryListPage /> },
       { path: "devices", element: <DeviceListPage /> },
       { path: "warranty-contracts", element: <WarrantyContractListPage /> },
+      { path: "tickets", element: <AdminTicketListPage /> },
       // Các child route admin khác
     ],
   },
@@ -79,6 +83,7 @@ const router = createBrowserRouter([
     children: [
       // Trang mặc định khi vào /my
       { index: true, element: <div className="p-4">Chào mừng Khách hàng!</div> },
+      { path: "tickets", element: <CustomerTicketListPage /> },
       // Các child route customer khác
     ],
   },

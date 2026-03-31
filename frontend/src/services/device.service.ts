@@ -39,3 +39,7 @@ export const deleteDevice = async (id: number) => {
   const res = await api.delete(`/devices/${id}`);
   return res.data;
 };
+export const getMyDevices = async (customerId: number, page = 1, pageSize = 100) => {
+  const res = await api.get(`/devices/customer/${customerId}`, { params: { page, pageSize } });
+  return res.data;
+};
