@@ -11,6 +11,7 @@ import CustomerListPage from "@/pages/customers/CustomerListPage";
 import TechnicianListPage from "@/pages/technicians/TechnicianListPage";
 import DeviceCategoryListPage from "@/pages/device-categories/DeviceCategoryListPage";
 import DeviceListPage from "@/pages/devices/DeviceListPage";
+import WarrantyContractListPage from "@/pages/warranty-contracts/WarrantyContractListPage";
 
 const RootRedirect = () => {
   const { token, user, isLoading } = useAuthStore();
@@ -47,6 +48,7 @@ const router = createBrowserRouter([
       { path: "technicians", element: <TechnicianListPage /> },
       { path: "device-categories", element: <DeviceCategoryListPage /> },
       { path: "devices", element: <DeviceListPage /> },
+      { path: "warranty-contracts", element: <WarrantyContractListPage /> },
       // Các child route admin khác
     ],
   },
