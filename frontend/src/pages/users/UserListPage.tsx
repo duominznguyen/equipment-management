@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getUsers, toggleActiveUser } from "@/services/user.service";
-import { DataTable } from "@/components/Datatable";
+import { DataTable } from "@/components/DataTable";
 import { usePagination } from "@/hooks/usePagination";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
