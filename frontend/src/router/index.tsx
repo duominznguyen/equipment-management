@@ -15,6 +15,7 @@ import WarrantyContractListPage from "@/pages/warranty-contracts/WarrantyContrac
 import AdminTicketListPage from "@/pages/tickets/AdminTicketListPage";
 import CustomerTicketListPage from "@/pages/tickets/CustomerTicketListPage";
 import MaintenanceRequestListPage from "@/pages/maintenance-requests/MaintenanceRequestListPage";
+import MaintenanceScheduleListPage from "@/pages/maintenance-schedules/MaintenanceScheduleListPage";
 
 const RootRedirect = () => {
   const { token, user, isLoading } = useAuthStore();
@@ -54,6 +55,7 @@ const router = createBrowserRouter([
       { path: "warranty-contracts", element: <WarrantyContractListPage /> },
       { path: "tickets", element: <AdminTicketListPage /> },
       { path: "maintenance-requests", element: <MaintenanceRequestListPage /> },
+      { path: "maintenance-schedules", element: <MaintenanceScheduleListPage /> },
 
       // Các child route admin khác
     ],
@@ -71,6 +73,7 @@ const router = createBrowserRouter([
       // Trang mặc định khi vào /tech
       { index: true, element: <div className="p-4">Chào mừng Kỹ thuật viên!</div> },
       { path: "maintenance-requests", element: <MaintenanceRequestListPage /> },
+      { path: "maintenance-schedules", element: <MaintenanceScheduleListPage /> },
       // Các child route tech khác
     ],
   },
@@ -87,6 +90,7 @@ const router = createBrowserRouter([
       // Trang mặc định khi vào /my
       { index: true, element: <div className="p-4">Chào mừng Khách hàng!</div> },
       { path: "tickets", element: <CustomerTicketListPage /> },
+      { path: "schedules", element: <MaintenanceScheduleListPage /> },
       // Các child route customer khác
     ],
   },
