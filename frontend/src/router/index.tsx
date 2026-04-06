@@ -16,6 +16,9 @@ import AdminTicketListPage from "@/pages/tickets/AdminTicketListPage";
 import CustomerTicketListPage from "@/pages/tickets/CustomerTicketListPage";
 import MaintenanceRequestListPage from "@/pages/maintenance-requests/MaintenanceRequestListPage";
 import MaintenanceScheduleListPage from "@/pages/maintenance-schedules/MaintenanceScheduleListPage";
+import PartListPage from "@/pages/parts/PartListPage";
+import PartImportListPage from "@/pages/part-imports/PartImportListPage";
+import PartExportListPage from "@/pages/part-exports/PartExportListPage";
 
 const RootRedirect = () => {
   const { token, user, isLoading } = useAuthStore();
@@ -56,6 +59,9 @@ const router = createBrowserRouter([
       { path: "tickets", element: <AdminTicketListPage /> },
       { path: "maintenance-requests", element: <MaintenanceRequestListPage /> },
       { path: "maintenance-schedules", element: <MaintenanceScheduleListPage /> },
+      { path: "parts", element: <PartListPage /> },
+      { path: "part-imports", element: <PartImportListPage /> },
+      { path: "part-exports", element: <PartExportListPage /> },
 
       // Các child route admin khác
     ],
@@ -74,6 +80,8 @@ const router = createBrowserRouter([
       { index: true, element: <div className="p-4">Chào mừng Kỹ thuật viên!</div> },
       { path: "maintenance-requests", element: <MaintenanceRequestListPage /> },
       { path: "maintenance-schedules", element: <MaintenanceScheduleListPage /> },
+      { path: "parts", element: <PartListPage /> },
+      { path: "part-exports", element: <PartExportListPage /> },
       // Các child route tech khác
     ],
   },
