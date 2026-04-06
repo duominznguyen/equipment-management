@@ -19,6 +19,7 @@ import MaintenanceScheduleListPage from "@/pages/maintenance-schedules/Maintenan
 import PartListPage from "@/pages/parts/PartListPage";
 import PartImportListPage from "@/pages/part-imports/PartImportListPage";
 import PartExportListPage from "@/pages/part-exports/PartExportListPage";
+import ReportsPage from "@/pages/reports/ReportsPage";
 
 const RootRedirect = () => {
   const { token, user, isLoading } = useAuthStore();
@@ -62,6 +63,7 @@ const router = createBrowserRouter([
       { path: "parts", element: <PartListPage /> },
       { path: "part-imports", element: <PartImportListPage /> },
       { path: "part-exports", element: <PartExportListPage /> },
+      { path: "reports", element: <ReportsPage /> },
 
       // Các child route admin khác
     ],
