@@ -1,30 +1,35 @@
-import { useState } from 'react'
-import { Outlet, useNavigate, useLocation } from 'react-router-dom'
-import { useAuthStore } from '@/stores/auth.store'
-import { Button } from '@/components/ui/button'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { useState } from "react";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import { useAuthStore } from "@/stores/auth.store";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
-  DropdownMenu, DropdownMenuContent,
-  DropdownMenuItem, DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu'
-import { Laptop, ShieldCheck, AlertCircle, Calendar, LogOut, Menu, X } from 'lucide-react'
-import { cn } from '@/lib/utils'
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Laptop, ShieldCheck, AlertCircle, Calendar, LogOut, Menu, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const menuItems = [
-  { key: 'my-devices', label: 'Thiết bị của tôi', icon: <Laptop size={18} />, path: '/my/devices' },
-  { key: 'my-warranties', label: 'Bảo hành của tôi', icon: <ShieldCheck size={18} />, path: '/my/warranties' },
-  { key: 'my-tickets', label: 'Ticket của tôi', icon: <AlertCircle size={18} />, path: '/my/tickets' },
-  { key: 'my-schedules', label: 'Lịch bảo trì', icon: <Calendar size={18} />, path: '/my/schedules' },
-]
+  { key: "my-devices", label: "Thiết bị của tôi", icon: <Laptop size={18} />, path: "/my/devices" },
+  { key: "my-warranties", label: "Bảo hành của tôi", icon: <ShieldCheck size={18} />, path: "/my/warranties" },
+  { key: "my-tickets", label: "Ticket của tôi", icon: <AlertCircle size={18} />, path: "/my/tickets" },
+  { key: "my-schedules", label: "Lịch bảo trì", icon: <Calendar size={18} />, path: "/my/schedules" },
+];
 
 const CustomerLayout = () => {
-  const [collapsed, setCollapsed] = useState(false)
-  const { user, logout } = useAuthStore()
-  const navigate = useNavigate()
-  const location = useLocation()
+  const [collapsed, setCollapsed] = useState(false);
+  const { user, logout } = useAuthStore();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const handleLogout = () => { logout(); navigate('/login') }
-  const isActive = (path: string) => location.pathname === path
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
+  const isActive = (path: string) => location.pathname === path;
 
   return (
     <div className="flex h-screen bg-background">
@@ -75,7 +80,7 @@ const CustomerLayout = () => {
         </main>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default CustomerLayout
+export default CustomerLayout;

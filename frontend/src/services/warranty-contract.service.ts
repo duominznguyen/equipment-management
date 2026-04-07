@@ -33,3 +33,10 @@ export const deleteWarrantyContract = async (id: number) => {
   const res = await api.delete(`/warranty-contracts/${id}`);
   return res.data;
 };
+
+export const getMyWarrantyContracts = async (customerId: number, page = 1, pageSize = 10) => {
+  const res = await api.get(`/warranty-contracts/customer/${customerId}`, {
+    params: { page, pageSize },
+  });
+  return res.data;
+};

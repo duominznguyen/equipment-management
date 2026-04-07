@@ -20,6 +20,8 @@ import PartListPage from "@/pages/parts/PartListPage";
 import PartImportListPage from "@/pages/part-imports/PartImportListPage";
 import PartExportListPage from "@/pages/part-exports/PartExportListPage";
 import ReportsPage from "@/pages/reports/ReportsPage";
+import MyDevicesPage from "@/pages/devices/MyDevicesPage";
+import MyWarrantiesPage from "@/pages/warranty-contracts/MyWarrantiesPage";
 
 const RootRedirect = () => {
   const { token, user, isLoading } = useAuthStore();
@@ -101,6 +103,8 @@ const router = createBrowserRouter([
       { index: true, element: <div className="p-4">Chào mừng Khách hàng!</div> },
       { path: "tickets", element: <CustomerTicketListPage /> },
       { path: "schedules", element: <MaintenanceScheduleListPage /> },
+      { path: "devices", element: <MyDevicesPage /> },
+      { path: "warranties", element: <MyWarrantiesPage /> },
       // Các child route customer khác
     ],
   },
