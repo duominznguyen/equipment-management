@@ -9,11 +9,10 @@ import deviceCategoriesRouter from "./modules/device-categories/device-categorie
 import devicesRouter from "./modules/devices/devices.router.js";
 import warrantyContractsRouter from "./modules/warranty-contracts/warranty-contracts.router.js";
 import ticketsRouter from "./modules/tickets/tickets.router.js";
-import maintenanceRequestsRouter from "./modules/maintenance-requests/maintenance-requests.router.js";
 import maintenanceSchedulesRouter from "./modules/maintenance-schedules/maintenance-schedules.router.js";
 import partsRouter from "./modules/parts/parts.router.js";
 import partImportsRouter from "./modules/part-imports/part-imports.router.js";
-import partExportsRouter from "./modules/part-exports/part-exports.router.js";
+import workOrdersRouter from "./modules/work-orders/work-orders.router.js";
 import reportsRouter from "./modules/reports/reports.router.js";
 
 dotenv.config();
@@ -32,11 +31,10 @@ app.use("/device-categories", deviceCategoriesRouter);
 app.use("/devices", devicesRouter);
 app.use("/warranty-contracts", warrantyContractsRouter);
 app.use("/tickets", ticketsRouter);
-app.use("/maintenance-requests", maintenanceRequestsRouter);
 app.use("/maintenance-schedules", maintenanceSchedulesRouter);
 app.use("/parts", partsRouter);
 app.use("/part-imports", partImportsRouter);
-app.use("/part-exports", partExportsRouter);
+app.use("/work-orders", workOrdersRouter);
 app.use("/reports", reportsRouter);
 
 app.listen(PORT, () => {

@@ -284,8 +284,8 @@ const seed = async () => {
     update: {},
     create: {
       deviceId: device2.id,
-      scheduledDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 ngày tới
-      status: 'upcoming',
+      nextMaintenanceDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 ngày tới
+      isHandled: false,
     }
   })
   await prisma.maintenanceSchedule.upsert({
@@ -293,8 +293,8 @@ const seed = async () => {
     update: {},
     create: {
       deviceId: device3.id,
-      scheduledDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 ngày tới
-      status: 'upcoming',
+      nextMaintenanceDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 ngày tới
+      isHandled: false,
     }
   })
   console.log('✅ Maintenance Schedules: 2 lịch')
