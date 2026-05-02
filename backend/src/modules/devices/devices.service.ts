@@ -6,7 +6,7 @@ export const getAll = async (query: any) => {
   return paginate(prisma.device, params, {
     include: {
       category: true,
-      customer: { select: { id: true, fullName: true, companyName: true } },
+      customer: { select: { id: true, fullName: true, additionalInfo: true } },
     },
     orderBy: { createdAt: "desc" },
   });
@@ -18,7 +18,7 @@ export const getById = async (id: number) => {
     include: {
       category: true,
       customer: {
-        select: { id: true, fullName: true, phone: true, companyName: true },
+        select: { id: true, fullName: true, phone: true, additionalInfo: true },
       },
       warrantyContracts: true,
     },
@@ -43,6 +43,7 @@ export const create = async (data: {
   brand: string;
   model: string;
   serialNumber: string;
+  address: string;
   purchaseDate?: string;
   status?: string;
 }) => {
@@ -58,7 +59,7 @@ export const create = async (data: {
     },
     include: {
       category: true,
-      customer: { select: { id: true, fullName: true, companyName: true } },
+      customer: { select: { id: true, fullName: true, additionalInfo: true } },
     },
   });
 };
@@ -70,6 +71,7 @@ export const update = async (
     name?: string;
     brand?: string;
     model?: string;
+    address?: string;
     purchaseDate?: string;
     status?: string;
   },
@@ -84,7 +86,7 @@ export const update = async (
     },
     include: {
       category: true,
-      customer: { select: { id: true, fullName: true, companyName: true } },
+      customer: { select: { id: true, fullName: true, additionalInfo: true } },
     },
   });
 };

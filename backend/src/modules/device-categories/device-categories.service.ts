@@ -30,8 +30,14 @@ export const update = async (
 export const remove = async (id: number) => {
   const category = await prisma.deviceCategory.findUnique({ where: { id } });
   if (!category) throw new Error("Loại thiết bị không tồn tại");
+
   const deviceCount = await prisma.device.count({ where: { categoryId: id } });
   if (deviceCount > 0)
     throw new Error("Không thể xoá loại thiết bị đang có thiết bị");
+
+  const skillCount = await prisma.technicianSkill.count({ where: { deviceCategoryId: id } });
+  if (skillCount > 0)
+    throw new Error("Không thể xoá loại thiết bị vì đang có kỹ thuật viên phụ trách");
+
   return prisma.deviceCategory.delete({ where: { id } });
 };
