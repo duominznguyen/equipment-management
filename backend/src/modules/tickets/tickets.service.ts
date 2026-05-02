@@ -5,8 +5,14 @@ export const getAll = async (query: any) => {
   const params = getPaginationParams(query);
   return paginate(prisma.ticket, params, {
     include: {
-      customer: { select: { id: true, fullName: true, companyName: true } },
-      device: { select: { id: true, name: true, serialNumber: true } },
+      device: {
+        select: {
+          id: true,
+          name: true,
+          serialNumber: true,
+          customer: { select: { id: true, fullName: true, additionalInfo: true } },
+        },
+      },
     },
     orderBy: { createdAt: "desc" },
   });
@@ -16,9 +22,6 @@ export const getById = async (id: number) => {
   const ticket = await prisma.ticket.findUnique({
     where: { id },
     include: {
-      customer: {
-        select: { id: true, fullName: true, phone: true, companyName: true },
-      },
       device: {
         select: {
           id: true,
@@ -26,9 +29,10 @@ export const getById = async (id: number) => {
           serialNumber: true,
           brand: true,
           model: true,
+          customer: { select: { id: true, fullName: true, phone: true, additionalInfo: true } },
         },
       },
-      maintenanceRequests: {
+      workOrders: {
         include: {
           technician: { select: { id: true, fullName: true } },
         },
@@ -46,7 +50,7 @@ export const getMyTickets = async (customerId: number, query: any) => {
   if (!customer) throw new Error("Khách hàng không tồn tại");
   const params = getPaginationParams(query);
   return paginate(prisma.ticket, params, {
-    where: { customerId: customer.id },
+    where: { device: { customerId: customer.id } },
     include: {
       device: { select: { id: true, name: true, serialNumber: true } },
     },
@@ -75,7 +79,6 @@ export const create = async (
 
   return prisma.ticket.create({
     data: {
-      customerId: customer.id,
       deviceId: data.deviceId,
       title: data.title,
       description: data.description,
@@ -100,5 +103,9 @@ export const updateStatus = async (id: number, status: string) => {
 export const remove = async (id: number) => {
   const ticket = await prisma.ticket.findUnique({ where: { id } });
   if (!ticket) throw new Error("Ticket không tồn tại");
+  
+  const workOrderCount = await prisma.workOrder.count({ where: { ticketId: id } });
+  if (workOrderCount > 0) throw new Error("Không thể xoá ticket vì đã có Work Order đang xử lý");
+  
   return prisma.ticket.delete({ where: { id } });
 };

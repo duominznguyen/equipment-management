@@ -5,8 +5,14 @@ export const getAll = async (query: any) => {
   const params = getPaginationParams(query);
   return paginate(prisma.warrantyContract, params, {
     include: {
-      device: { select: { id: true, name: true, serialNumber: true } },
-      customer: { select: { id: true, fullName: true, companyName: true } },
+      device: { 
+        select: { 
+          id: true, 
+          name: true, 
+          serialNumber: true,
+          customer: { select: { id: true, fullName: true, additionalInfo: true } }
+        } 
+      },
     },
     orderBy: { createdAt: "desc" },
   });
@@ -16,9 +22,12 @@ export const getById = async (id: number) => {
   const contract = await prisma.warrantyContract.findUnique({
     where: { id },
     include: {
-      device: true,
-      customer: {
-        select: { id: true, fullName: true, phone: true, companyName: true },
+      device: {
+        include: {
+          customer: {
+            select: { id: true, fullName: true, phone: true, additionalInfo: true },
+          }
+        }
       },
     },
   });
@@ -29,7 +38,7 @@ export const getById = async (id: number) => {
 export const getByCustomer = async (customerId: number, query: any) => {
   const params = getPaginationParams(query);
   return paginate(prisma.warrantyContract, params, {
-    where: { customerId },
+    where: { device: { customerId } },
     include: {
       device: { select: { id: true, name: true, serialNumber: true } },
     },
@@ -39,7 +48,6 @@ export const getByCustomer = async (customerId: number, query: any) => {
 
 export const create = async (data: {
   deviceId: number;
-  customerId: number;
   contractNumber: string;
   startDate: string;
   endDate: string;
@@ -58,10 +66,23 @@ export const create = async (data: {
     endDate < now ? "expired" : diffDays <= 30 ? "expiring_soon" : "active";
 
   return prisma.warrantyContract.create({
-    data: { ...data, startDate, endDate, status },
+    data: { 
+      deviceId: data.deviceId,
+      contractNumber: data.contractNumber,
+      terms: data.terms,
+      startDate, 
+      endDate, 
+      status 
+    },
     include: {
-      device: { select: { id: true, name: true, serialNumber: true } },
-      customer: { select: { id: true, fullName: true, companyName: true } },
+      device: { 
+        select: { 
+          id: true, 
+          name: true, 
+          serialNumber: true,
+          customer: { select: { id: true, fullName: true, additionalInfo: true } }
+        } 
+      },
     },
   });
 };
@@ -86,14 +107,20 @@ export const update = async (
   return prisma.warrantyContract.update({
     where: { id },
     data: {
-      ...data,
+      terms: data.terms,
       startDate: data.startDate ? new Date(data.startDate) : undefined,
       endDate: data.endDate ? new Date(data.endDate) : undefined,
       status,
     },
     include: {
-      device: { select: { id: true, name: true, serialNumber: true } },
-      customer: { select: { id: true, fullName: true, companyName: true } },
+      device: { 
+        select: { 
+          id: true, 
+          name: true, 
+          serialNumber: true,
+          customer: { select: { id: true, fullName: true, additionalInfo: true } }
+        } 
+      },
     },
   });
 };

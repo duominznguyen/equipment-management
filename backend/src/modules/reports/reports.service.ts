@@ -22,9 +22,7 @@ export const getOverview = async () => {
     prisma.warrantyContract.count({ where: { status: 'active' } }),
     prisma.warrantyContract.count({ where: { status: 'expired' } }),
     prisma.part.count(),
-    prisma.part.findMany({
-      where: { stockQuantity: { lte: prisma.part.fields.minQuantity } }
-    }).then(parts => parts.filter(p => p.stockQuantity <= p.minQuantity).length),
+    prisma.part.findMany().then(parts => parts.filter(p => p.stockQuantity <= p.minQuantity).length),
   ])
 
   return {
@@ -43,21 +41,31 @@ export const getMaintenanceReport = async (query: any) => {
   if (endDate) where.createdAt = { ...where.createdAt, lte: new Date(endDate) }
 
   const [total, pending, processing, completed] = await Promise.all([
-    prisma.maintenanceRequest.count({ where }),
-    prisma.maintenanceRequest.count({ where: { ...where, status: 'pending' } }),
-    prisma.maintenanceRequest.count({ where: { ...where, status: 'processing' } }),
-    prisma.maintenanceRequest.count({ where: { ...where, status: 'completed' } }),
+    prisma.workOrder.count({ where }),
+    prisma.workOrder.count({ where: { ...where, status: 'pending' } }),
+    prisma.workOrder.count({ where: { ...where, status: 'processing' } }),
+    prisma.workOrder.count({ where: { ...where, status: 'completed' } }),
   ])
 
-  const recentRequests = await prisma.maintenanceRequest.findMany({
+  const recentWorkOrders = await prisma.workOrder.findMany({
     where,
     include: {
-      device: { select: { name: true, serialNumber: true } },
       technician: { select: { fullName: true } },
+      ticket: { include: { device: { select: { name: true, serialNumber: true } } } },
+      maintenanceSchedule: { include: { device: { select: { name: true, serialNumber: true } } } },
     },
     orderBy: { createdAt: 'desc' },
     take: 10,
   })
+
+  // Format to match old shape
+  const recentRequests = recentWorkOrders.map(wo => ({
+    id: wo.id,
+    status: wo.status,
+    createdAt: wo.createdAt,
+    device: wo.ticket?.device || wo.maintenanceSchedule?.device,
+    technician: wo.technician
+  }))
 
   return { summary: { total, pending, processing, completed }, recentRequests }
 }
@@ -65,31 +73,28 @@ export const getMaintenanceReport = async (query: any) => {
 export const getPartsCostReport = async (query: any) => {
   const { startDate, endDate } = query
   const where: any = {}
-  if (startDate) where.exportDate = { gte: new Date(startDate) }
-  if (endDate) where.exportDate = { ...where.exportDate, lte: new Date(endDate) }
+  if (startDate) where.createdAt = { gte: new Date(startDate) }
+  if (endDate) where.createdAt = { ...where.createdAt, lte: new Date(endDate) }
 
-  const exports = await prisma.partExport.findMany({
+  const workOrders = await prisma.workOrder.findMany({
     where,
     include: {
-      details: { include: { part: true } }
+      partUsages: { include: { part: true } }
     }
   })
 
-  const totalCost = exports.reduce((sum, exp) =>
-    sum + exp.details.reduce((s, d) => s + Number(d.unitPrice) * d.quantity, 0), 0
-  )
+  const partUsageList = workOrders.flatMap(wo => wo.partUsages)
 
-  const partUsage = exports.flatMap(e => e.details).reduce((acc: any, detail) => {
-    const key = detail.part.name
+  const partUsageMap = partUsageList.reduce((acc: any, usage) => {
+    const key = usage.part.name
     if (!acc[key]) acc[key] = { name: key, quantity: 0, totalCost: 0 }
-    acc[key].quantity += detail.quantity
-    acc[key].totalCost += Number(detail.unitPrice) * detail.quantity
+    acc[key].quantity += usage.quantityUsage
     return acc
   }, {})
 
   return {
-    totalCost,
-    totalExports: exports.length,
-    partUsage: Object.values(partUsage),
+    totalCost: 0, // Không còn lưu giá xuất trong DB mới
+    totalExports: workOrders.length,
+    partUsage: Object.values(partUsageMap),
   }
 }
