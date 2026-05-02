@@ -23,35 +23,39 @@ model User {
   customer    Customer?
   technician  Technician?
   partImports PartImport[]
-  partExports PartExport[]
 }
 
 model Customer {
-  id          Int      @id @default(autoincrement())
-  userId      Int      @unique
-  fullName    String   @db.NVarChar(100)
-  phone       String   @db.VarChar(20)
-  address     String   @db.NVarChar(255)
-  companyName String?  @db.NVarChar(100)
-  createdAt   DateTime @default(now())
-
-  user              User               @relation(fields: [userId], references: [id])
-  devices           Device[]
-  warrantyContracts WarrantyContract[]
-  tickets           Ticket[]
-}
-
-model Technician {
   id             Int      @id @default(autoincrement())
   userId         Int      @unique
   fullName       String   @db.NVarChar(100)
   phone          String   @db.VarChar(20)
-  specialization String?  @db.NVarChar(100)
+  additionalInfo String?  @db.NVarChar(255)
   createdAt      DateTime @default(now())
 
-  user                 User                  @relation(fields: [userId], references: [id])
-  maintenanceRequests  MaintenanceRequest[]
-  maintenanceSchedules MaintenanceSchedule[]
+  user    User     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  devices Device[]
+}
+
+model Technician {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @unique
+  fullName  String   @db.NVarChar(100)
+  phone     String   @db.VarChar(20)
+  createdAt DateTime @default(now())
+
+  user             User              @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  technicianSkills TechnicianSkill[]
+  workOrders       WorkOrder[]
+}
+
+model TechnicianSkill {
+  id               Int @id @default(autoincrement())
+  technicianId     Int
+  deviceCategoryId Int
+
+  technician     Technician     @relation(fields: [technicianId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  deviceCategory DeviceCategory @relation(fields: [deviceCategoryId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 // ==========================================
@@ -63,7 +67,8 @@ model DeviceCategory {
   name        String  @db.NVarChar(100)
   description String? @db.NVarChar(255)
 
-  devices Device[]
+  technicianSkills TechnicianSkill[]
+  devices          Device[]
 }
 
 model Device {
@@ -74,15 +79,15 @@ model Device {
   brand        String    @db.NVarChar(100)
   model        String    @db.NVarChar(100)
   serialNumber String    @unique @db.VarChar(100)
+  address      String    @db.NVarChar(255)
   purchaseDate DateTime?
   status       String    @default("active") @db.VarChar(20)
   createdAt    DateTime  @default(now())
 
-  category             DeviceCategory        @relation(fields: [categoryId], references: [id])
+  category             DeviceCategory        @relation(fields: [categoryId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   customer             Customer              @relation(fields: [customerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   warrantyContracts    WarrantyContract[]
   tickets              Ticket[]
-  maintenanceRequests  MaintenanceRequest[]
   maintenanceSchedules MaintenanceSchedule[]
 }
 
@@ -93,7 +98,6 @@ model Device {
 model WarrantyContract {
   id             Int      @id @default(autoincrement())
   deviceId       Int
-  customerId     Int
   contractNumber String   @unique @db.VarChar(50)
   startDate      DateTime
   endDate        DateTime
@@ -101,63 +105,57 @@ model WarrantyContract {
   status         String   @default("active") @db.VarChar(20)
   createdAt      DateTime @default(now())
 
-  device   Device   @relation(fields: [deviceId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  customer Customer @relation(fields: [customerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  device Device @relation(fields: [deviceId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 // ==========================================
-// NHÓM TICKET & BẢO TRÌ
+// NHÓM TICKET & BẢO TRÌ (WORK ORDER)
 // ==========================================
 
 model Ticket {
   id          Int      @id @default(autoincrement())
-  customerId  Int
   deviceId    Int
   title       String   @db.NVarChar(200)
   description String   @db.NVarChar(Max)
   priority    String   @default("medium") @db.VarChar(20)
   status      String   @default("pending") @db.VarChar(20)
   createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  updatedAt   DateTime @default(now()) @updatedAt
 
-  customer            Customer             @relation(fields: [customerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  device              Device               @relation(fields: [deviceId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  maintenanceRequests MaintenanceRequest[]
-}
-
-model MaintenanceRequest {
-  id           Int       @id @default(autoincrement())
-  ticketId     Int?
-  deviceId     Int
-  technicianId Int
-  description  String    @db.NVarChar(Max)
-  type         String    @db.VarChar(20)
-  status       String    @default("pending") @db.VarChar(20)
-  startedAt    DateTime?
-  completedAt  DateTime?
-  createdAt    DateTime  @default(now())
-
-  ticket      Ticket?    @relation(fields: [ticketId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  device      Device     @relation(fields: [deviceId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  technician  Technician @relation(fields: [technicianId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  partExports PartExport[]
+  device     Device      @relation(fields: [deviceId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  workOrders WorkOrder[]
 }
 
 model MaintenanceSchedule {
   id            Int      @id @default(autoincrement())
   deviceId      Int
-  technicianId  Int
   scheduledDate DateTime
-  description   String?  @db.NVarChar(255)
   status        String   @default("upcoming") @db.VarChar(20)
   createdAt     DateTime @default(now())
 
-  device     Device     @relation(fields: [deviceId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  technician Technician @relation(fields: [technicianId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  device     Device      @relation(fields: [deviceId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  workOrders WorkOrder[]
+}
+
+model WorkOrder {
+  id                    Int       @id @default(autoincrement())
+  ticketId              Int?
+  maintenanceScheduleId Int?
+  technicianId          Int
+  workDescription       String?   @db.NVarChar(1000)
+  status                String    @default("pending") @db.VarChar(20)
+  createdAt             DateTime  @default(now())
+  startedAt             DateTime?
+  completedAt           DateTime?
+
+  ticket              Ticket?              @relation(fields: [ticketId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  maintenanceSchedule MaintenanceSchedule? @relation(fields: [maintenanceScheduleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  technician          Technician           @relation(fields: [technicianId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  partUsages          PartUsage[]
 }
 
 // ==========================================
-// NHÓM KHO LINH KIỆN
+// NHÓM KHO LINH KIỆN (PARTS)
 // ==========================================
 
 model Part {
@@ -169,20 +167,29 @@ model Part {
   minQuantity   Int     @default(0)
   description   String? @db.NVarChar(255)
 
-  importDetails PartImportDetail[]
-  exportDetails PartExportDetail[]
+  partUsages        PartUsage[]
+  partImportDetails PartImportDetail[]
+}
+
+model PartUsage {
+  id            Int @id @default(autoincrement())
+  workOrderId   Int
+  partId        Int
+  quantityUsage Int
+
+  workOrder WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  part      Part      @relation(fields: [partId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model PartImport {
   id         Int      @id @default(autoincrement())
-  importCode String   @unique @db.VarChar(50)
   importedBy Int
   supplier   String   @db.NVarChar(100)
   importDate DateTime
   totalCost  Decimal  @db.Decimal(18, 2)
   note       String?  @db.NVarChar(255)
 
-  user    User               @relation(fields: [importedBy], references: [id])
+  user    User               @relation(fields: [importedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
   details PartImportDetail[]
 }
 
@@ -193,30 +200,6 @@ model PartImportDetail {
   quantity  Int
   unitPrice Decimal @db.Decimal(18, 2)
 
-  import PartImport @relation(fields: [importId], references: [id])
-  part   Part       @relation(fields: [partId], references: [id])
-}
-
-model PartExport {
-  id                   Int      @id @default(autoincrement())
-  exportCode           String   @unique @db.VarChar(50)
-  maintenanceRequestId Int
-  exportedBy           Int
-  exportDate           DateTime
-  note                 String?  @db.NVarChar(255)
-
-  maintenanceRequest MaintenanceRequest @relation(fields: [maintenanceRequestId], references: [id])
-  user               User               @relation(fields: [exportedBy], references: [id])
-  details            PartExportDetail[]
-}
-
-model PartExportDetail {
-  id        Int     @id @default(autoincrement())
-  exportId  Int
-  partId    Int
-  quantity  Int
-  unitPrice Decimal @db.Decimal(18, 2)
-
-  export PartExport @relation(fields: [exportId], references: [id])
-  part   Part       @relation(fields: [partId], references: [id])
+  import PartImport @relation(fields: [importId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  part   Part       @relation(fields: [partId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }

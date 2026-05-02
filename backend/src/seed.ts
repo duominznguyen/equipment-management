@@ -8,7 +8,7 @@ const seed = async () => {
   // USERS
   // ==========================================
   const adminHash = await bcrypt.hash('admin123', 10)
-  const admin = await prisma.user.upsert({
+  const adminUser = await prisma.user.upsert({
     where: { username: 'admin' },
     update: {},
     create: {
@@ -19,10 +19,30 @@ const seed = async () => {
       isActive: true,
     }
   })
-  console.log('✅ Admin:', admin.username)
+  console.log('✅ Admin:', adminUser.username)
 
   // ==========================================
-  // TECHNICIANS
+  // DEVICE CATEGORIES
+  // ==========================================
+  const cat1 = await prisma.deviceCategory.upsert({
+    where: { id: 1 },
+    update: {},
+    create: { name: 'Máy tính để bàn', description: 'Desktop PC các loại' }
+  })
+  const cat2 = await prisma.deviceCategory.upsert({
+    where: { id: 2 },
+    update: {},
+    create: { name: 'Laptop', description: 'Máy tính xách tay các loại' }
+  })
+  const cat3 = await prisma.deviceCategory.upsert({
+    where: { id: 3 },
+    update: {},
+    create: { name: 'Máy in', description: 'Máy in, máy photocopy' }
+  })
+  console.log('✅ Device Categories: 3 loại')
+
+  // ==========================================
+  // TECHNICIANS & SKILLS
   // ==========================================
   const tech1Hash = await bcrypt.hash('tech123', 10)
   const tech1User = await prisma.user.upsert({
@@ -43,8 +63,16 @@ const seed = async () => {
       userId: tech1User.id,
       fullName: 'Nguyễn Văn Kỹ Thuật',
       phone: '0901111111',
-      specialization: 'Máy tính, Laptop',
     }
+  })
+
+  // Cập nhật Skills cho Tech 1
+  await prisma.technicianSkill.deleteMany({ where: { technicianId: tech1.id } })
+  await prisma.technicianSkill.createMany({
+    data: [
+      { technicianId: tech1.id, deviceCategoryId: cat1.id },
+      { technicianId: tech1.id, deviceCategoryId: cat2.id }
+    ]
   })
   console.log('✅ Technician:', tech1.fullName)
 
@@ -67,8 +95,15 @@ const seed = async () => {
       userId: tech2User.id,
       fullName: 'Trần Thị Kỹ Thuật',
       phone: '0902222222',
-      specialization: 'Máy in, Máy photocopy',
     }
+  })
+
+  // Cập nhật Skills cho Tech 2
+  await prisma.technicianSkill.deleteMany({ where: { technicianId: tech2.id } })
+  await prisma.technicianSkill.createMany({
+    data: [
+      { technicianId: tech2.id, deviceCategoryId: cat3.id }
+    ]
   })
   console.log('✅ Technician:', tech2.fullName)
 
@@ -94,8 +129,7 @@ const seed = async () => {
       userId: cust1User.id,
       fullName: 'Nguyễn Văn An',
       phone: '0903333333',
-      address: '123 Đường Lê Lợi, Quận 1, TP.HCM',
-      companyName: 'Công ty TNHH ABC',
+      additionalInfo: 'Địa chỉ: 123 Đường Lê Lợi, Quận 1, TP.HCM | Công ty TNHH ABC',
     }
   })
   console.log('✅ Customer:', cust1.fullName)
@@ -119,31 +153,10 @@ const seed = async () => {
       userId: cust2User.id,
       fullName: 'Trần Thị Bình',
       phone: '0904444444',
-      address: '456 Đường Nguyễn Huệ, Quận 1, TP.HCM',
-      companyName: 'Công ty CP XYZ',
+      additionalInfo: 'Địa chỉ: 456 Đường Nguyễn Huệ, Quận 1, TP.HCM | Công ty CP XYZ',
     }
   })
   console.log('✅ Customer:', cust2.fullName)
-
-  // ==========================================
-  // DEVICE CATEGORIES
-  // ==========================================
-  const cat1 = await prisma.deviceCategory.upsert({
-    where: { id: 1 },
-    update: {},
-    create: { name: 'Máy tính để bàn', description: 'Desktop PC các loại' }
-  })
-  const cat2 = await prisma.deviceCategory.upsert({
-    where: { id: 2 },
-    update: {},
-    create: { name: 'Laptop', description: 'Máy tính xách tay các loại' }
-  })
-  const cat3 = await prisma.deviceCategory.upsert({
-    where: { id: 3 },
-    update: {},
-    create: { name: 'Máy in', description: 'Máy in, máy photocopy' }
-  })
-  console.log('✅ Device Categories: 3 loại')
 
   // ==========================================
   // DEVICES
@@ -158,6 +171,7 @@ const seed = async () => {
       brand: 'Dell',
       model: 'OptiPlex 7090',
       serialNumber: 'SN001',
+      address: 'Phòng Kế toán, Tầng 3',
       purchaseDate: new Date('2023-01-15'),
       status: 'active',
     }
@@ -172,6 +186,7 @@ const seed = async () => {
       brand: 'HP',
       model: 'EliteBook 840',
       serialNumber: 'SN002',
+      address: 'Phòng Giám đốc, Tầng 5',
       purchaseDate: new Date('2023-03-20'),
       status: 'active',
     }
@@ -186,6 +201,7 @@ const seed = async () => {
       brand: 'Canon',
       model: 'imageRUNNER 2625',
       serialNumber: 'SN003',
+      address: 'Khu vực in ấn, Tầng 2',
       purchaseDate: new Date('2022-06-10'),
       status: 'maintaining',
     }
@@ -200,7 +216,6 @@ const seed = async () => {
     update: {},
     create: {
       deviceId: device1.id,
-      customerId: cust1.id,
       contractNumber: 'WC001',
       startDate: new Date('2023-01-15'),
       endDate: new Date('2025-01-15'),
@@ -213,7 +228,6 @@ const seed = async () => {
     update: {},
     create: {
       deviceId: device2.id,
-      customerId: cust1.id,
       contractNumber: 'WC002',
       startDate: new Date('2023-03-20'),
       endDate: new Date('2024-03-20'),
@@ -226,7 +240,6 @@ const seed = async () => {
     update: {},
     create: {
       deviceId: device3.id,
-      customerId: cust2.id,
       contractNumber: 'WC003',
       startDate: new Date('2022-06-10'),
       endDate: new Date('2026-06-10'),
@@ -243,7 +256,6 @@ const seed = async () => {
     where: { id: 1 },
     update: {},
     create: {
-      customerId: cust1.id,
       deviceId: device1.id,
       title: 'Máy tính không khởi động được',
       description: 'Bật nguồn máy tính nhưng không lên màn hình, đèn nguồn nhấp nháy',
@@ -255,7 +267,6 @@ const seed = async () => {
     where: { id: 2 },
     update: {},
     create: {
-      customerId: cust2.id,
       deviceId: device3.id,
       title: 'Máy in bị kẹt giấy liên tục',
       description: 'Máy in bị kẹt giấy sau mỗi 5-10 tờ in',
@@ -266,24 +277,6 @@ const seed = async () => {
   console.log('✅ Tickets: 2 ticket')
 
   // ==========================================
-  // MAINTENANCE REQUESTS
-  // ==========================================
-  const mr1 = await prisma.maintenanceRequest.upsert({
-    where: { id: 1 },
-    update: {},
-    create: {
-      ticketId: ticket1.id,
-      deviceId: device1.id,
-      technicianId: tech1.id,
-      description: 'Kiểm tra và sửa chữa máy tính không khởi động',
-      type: 'repair',
-      status: 'processing',
-      startedAt: new Date(),
-    }
-  })
-  console.log('✅ Maintenance Requests: 1 phiếu')
-
-  // ==========================================
   // MAINTENANCE SCHEDULES
   // ==========================================
   await prisma.maintenanceSchedule.upsert({
@@ -291,9 +284,7 @@ const seed = async () => {
     update: {},
     create: {
       deviceId: device2.id,
-      technicianId: tech1.id,
       scheduledDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 ngày tới
-      description: 'Bảo trì định kỳ laptop - vệ sinh, kiểm tra phần cứng',
       status: 'upcoming',
     }
   })
@@ -302,13 +293,27 @@ const seed = async () => {
     update: {},
     create: {
       deviceId: device3.id,
-      technicianId: tech2.id,
       scheduledDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 ngày tới
-      description: 'Bảo trì máy in - vệ sinh đầu in, kiểm tra trục cuốn giấy',
       status: 'upcoming',
     }
   })
   console.log('✅ Maintenance Schedules: 2 lịch')
+
+  // ==========================================
+  // WORK ORDERS (Replaces Maintenance Requests)
+  // ==========================================
+  const wo1 = await prisma.workOrder.upsert({
+    where: { id: 1 },
+    update: {},
+    create: {
+      ticketId: ticket1.id,
+      technicianId: tech1.id,
+      workDescription: 'Kiểm tra và sửa chữa máy tính không khởi động',
+      status: 'processing',
+      startedAt: new Date(),
+    }
+  })
+  console.log('✅ Work Orders: 1 phiếu')
 
   // ==========================================
   // PARTS
@@ -355,11 +360,10 @@ const seed = async () => {
   // PART IMPORTS
   // ==========================================
   const import1 = await prisma.partImport.upsert({
-    where: { importCode: 'IMP001' },
+    where: { id: 1 },
     update: {},
     create: {
-      importCode: 'IMP001',
-      importedBy: admin.id,
+      importedBy: adminUser.id,
       supplier: 'Công ty Phân phối Linh kiện ABC',
       importDate: new Date('2024-01-10'),
       totalCost: 15000000,
@@ -389,30 +393,18 @@ const seed = async () => {
   console.log('✅ Part Imports: 1 phiếu nhập')
 
   // ==========================================
-  // PART EXPORTS
+  // PART USAGES (Replaces Part Exports)
   // ==========================================
-  const export1 = await prisma.partExport.upsert({
-    where: { exportCode: 'EXP001' },
-    update: {},
-    create: {
-      exportCode: 'EXP001',
-      maintenanceRequestId: mr1.id,
-      exportedBy: tech1User.id,
-      exportDate: new Date(),
-      note: 'Xuất linh kiện sửa PC không khởi động',
-    }
-  })
-  await prisma.partExportDetail.upsert({
+  await prisma.partUsage.upsert({
     where: { id: 1 },
     update: {},
     create: {
-      exportId: export1.id,
+      workOrderId: wo1.id,
       partId: part1.id,
-      quantity: 1,
-      unitPrice: 1500000,
+      quantityUsage: 1,
     }
   })
-  console.log('✅ Part Exports: 1 phiếu xuất')
+  console.log('✅ Part Usages: 1 phiếu sử dụng')
 
   console.log('\n🎉 Seed data hoàn thành!')
   console.log('\n📋 Tài khoản test:')
