@@ -22,7 +22,6 @@ export const getById = async (id: number) => {
         select: { id: true, username: true, email: true, isActive: true },
       },
       devices: true,
-      warrantyContracts: true,
     },
   });
   if (!customer) throw new Error("Khách hàng không tồn tại");
@@ -35,8 +34,7 @@ export const create = async (data: {
   email: string;
   fullName: string;
   phone: string;
-  address: string;
-  companyName?: string;
+  additionalInfo?: string;
 }) => {
   const existingUsername = await prisma.user.findUnique({
     where: { username: data.username },
@@ -65,8 +63,7 @@ export const create = async (data: {
         userId: user.id,
         fullName: data.fullName,
         phone: data.phone,
-        address: data.address,
-        companyName: data.companyName,
+        additionalInfo: data.additionalInfo,
       },
       include: {
         user: {
@@ -82,8 +79,7 @@ export const update = async (
   data: {
     fullName?: string;
     phone?: string;
-    address?: string;
-    companyName?: string;
+    additionalInfo?: string;
   },
 ) => {
   const customer = await prisma.customer.findUnique({ where: { id } });

@@ -9,6 +9,9 @@ export const getAll = async (query: any) => {
       user: {
         select: { id: true, username: true, email: true, isActive: true },
       },
+      technicianSkills: {
+        include: { deviceCategory: true },
+      },
     },
     orderBy: { createdAt: "desc" },
   });
@@ -20,6 +23,9 @@ export const getById = async (id: number) => {
     include: {
       user: {
         select: { id: true, username: true, email: true, isActive: true },
+      },
+      technicianSkills: {
+        include: { deviceCategory: true },
       },
     },
   });
@@ -33,7 +39,7 @@ export const create = async (data: {
   email: string;
   fullName: string;
   phone: string;
-  specialization?: string;
+  deviceCategoryIds?: number[];
 }) => {
   const existingUsername = await prisma.user.findUnique({
     where: { username: data.username },
@@ -62,11 +68,20 @@ export const create = async (data: {
         userId: user.id,
         fullName: data.fullName,
         phone: data.phone,
-        specialization: data.specialization,
+        technicianSkills: data.deviceCategoryIds
+          ? {
+              create: data.deviceCategoryIds.map((id) => ({
+                deviceCategoryId: id,
+              })),
+            }
+          : undefined,
       },
       include: {
         user: {
           select: { id: true, username: true, email: true, isActive: true },
+        },
+        technicianSkills: {
+          include: { deviceCategory: true },
         },
       },
     });
@@ -78,17 +93,31 @@ export const update = async (
   data: {
     fullName?: string;
     phone?: string;
-    specialization?: string;
+    deviceCategoryIds?: number[];
   },
 ) => {
   const technician = await prisma.technician.findUnique({ where: { id } });
   if (!technician) throw new Error("Kỹ thuật viên không tồn tại");
   return prisma.technician.update({
     where: { id },
-    data,
+    data: {
+      fullName: data.fullName,
+      phone: data.phone,
+      technicianSkills: data.deviceCategoryIds
+        ? {
+            deleteMany: {},
+            create: data.deviceCategoryIds.map((id) => ({
+              deviceCategoryId: id,
+            })),
+          }
+        : undefined,
+    },
     include: {
       user: {
         select: { id: true, username: true, email: true, isActive: true },
+      },
+      technicianSkills: {
+        include: { deviceCategory: true },
       },
     },
   });
@@ -98,6 +127,7 @@ export const remove = async (id: number) => {
   const technician = await prisma.technician.findUnique({ where: { id } });
   if (!technician) throw new Error("Kỹ thuật viên không tồn tại");
   return prisma.$transaction(async (tx) => {
+    await tx.technicianSkill.deleteMany({ where: { technicianId: id } });
     await tx.technician.delete({ where: { id } });
     await tx.user.delete({ where: { id: technician.userId } });
   });
