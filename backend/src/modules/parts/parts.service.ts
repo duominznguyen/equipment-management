@@ -35,5 +35,12 @@ export const update = async (id: number, data: {
 export const remove = async (id: number) => {
   const part = await prisma.part.findUnique({ where: { id } })
   if (!part) throw new Error('Linh kiện không tồn tại')
+
+  const usagesCount = await prisma.partUsage.count({ where: { partId: id } })
+  if (usagesCount > 0) throw new Error('Không thể xoá linh kiện vì đã có lịch sử sử dụng trong Work Order')
+
+  const importsCount = await prisma.partImportDetail.count({ where: { partId: id } })
+  if (importsCount > 0) throw new Error('Không thể xoá linh kiện vì đã có lịch sử nhập kho')
+
   return prisma.part.delete({ where: { id } })
 }

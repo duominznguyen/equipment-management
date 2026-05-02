@@ -25,19 +25,15 @@ export const getById = async (id: number) => {
 }
 
 export const create = async (userId: number, data: {
-  importCode: string; supplier: string
+  supplier: string
   importDate: string; note?: string
   details: { partId: number; quantity: number; unitPrice: number }[]
 }) => {
-  const existing = await prisma.partImport.findUnique({ where: { importCode: data.importCode } })
-  if (existing) throw new Error('Mã phiếu nhập đã tồn tại')
-
   const totalCost = data.details.reduce((sum, d) => sum + d.quantity * d.unitPrice, 0)
 
   return prisma.$transaction(async (tx) => {
     const partImport = await tx.partImport.create({
       data: {
-        importCode: data.importCode,
         importedBy: userId,
         supplier: data.supplier,
         importDate: new Date(data.importDate),
