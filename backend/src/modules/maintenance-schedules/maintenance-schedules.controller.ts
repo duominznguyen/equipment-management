@@ -44,7 +44,7 @@ export const update = async (req: AuthRequest, res: Response) => {
 
 export const updateStatus = async (req: AuthRequest, res: Response) => {
   try {
-    res.json(await Service.updateStatus(Number(req.params.id), req.body.status));
+    res.json(await Service.updateStatus(Number(req.params.id), req.body.isHandled));
   } catch (error: any) {
     res.status(400).json({ message: error.message });
   }

@@ -6,9 +6,8 @@ export const getAll = async (query: any) => {
   return paginate(prisma.maintenanceSchedule, params, {
     include: {
       device: { select: { id: true, name: true, serialNumber: true } },
-      technician: { select: { id: true, fullName: true } },
     },
-    orderBy: { scheduledDate: "asc" },
+    orderBy: { nextMaintenanceDate: "asc" },
   });
 };
 
@@ -17,7 +16,7 @@ export const getById = async (id: number) => {
     where: { id },
     include: {
       device: true,
-      technician: { select: { id: true, fullName: true, phone: true } },
+      workOrders: true,
     },
   });
   if (!schedule) throw new Error("Lịch bảo trì không tồn tại");
@@ -39,27 +38,30 @@ export const getMySchedules = async (userId: number, query: any) => {
     where: { deviceId: { in: deviceIds } },
     include: {
       device: { select: { id: true, name: true, serialNumber: true } },
-      technician: { select: { id: true, fullName: true } },
     },
-    orderBy: { scheduledDate: "asc" },
+    orderBy: { nextMaintenanceDate: "asc" },
   });
 };
 
 export const create = async (data: {
   deviceId: number;
-  technicianId: number;
-  scheduledDate: string;
-  description?: string;
+  lastMaintenanceDate?: string;
+  nextMaintenanceDate?: string;
+  leadTimeDays?: number;
+  isHandled?: boolean;
+  isContinueMaintain?: boolean;
 }) => {
   return prisma.maintenanceSchedule.create({
     data: {
-      ...data,
-      scheduledDate: new Date(data.scheduledDate),
-      status: "upcoming",
+      deviceId: data.deviceId,
+      lastMaintenanceDate: data.lastMaintenanceDate ? new Date(data.lastMaintenanceDate) : undefined,
+      nextMaintenanceDate: data.nextMaintenanceDate ? new Date(data.nextMaintenanceDate) : undefined,
+      leadTimeDays: data.leadTimeDays,
+      isHandled: data.isHandled,
+      isContinueMaintain: data.isContinueMaintain,
     },
     include: {
       device: { select: { id: true, name: true, serialNumber: true } },
-      technician: { select: { id: true, fullName: true } },
     },
   });
 };
@@ -67,9 +69,11 @@ export const create = async (data: {
 export const update = async (
   id: number,
   data: {
-    technicianId?: number;
-    scheduledDate?: string;
-    description?: string;
+    lastMaintenanceDate?: string;
+    nextMaintenanceDate?: string;
+    leadTimeDays?: number;
+    isHandled?: boolean;
+    isContinueMaintain?: boolean;
   },
 ) => {
   const schedule = await prisma.maintenanceSchedule.findUnique({ where: { id } });
@@ -77,24 +81,30 @@ export const update = async (
   return prisma.maintenanceSchedule.update({
     where: { id },
     data: {
-      ...data,
-      scheduledDate: data.scheduledDate ? new Date(data.scheduledDate) : undefined,
+      lastMaintenanceDate: data.lastMaintenanceDate ? new Date(data.lastMaintenanceDate) : undefined,
+      nextMaintenanceDate: data.nextMaintenanceDate ? new Date(data.nextMaintenanceDate) : undefined,
+      leadTimeDays: data.leadTimeDays,
+      isHandled: data.isHandled,
+      isContinueMaintain: data.isContinueMaintain,
     },
     include: {
       device: { select: { id: true, name: true, serialNumber: true } },
-      technician: { select: { id: true, fullName: true } },
     },
   });
 };
 
-export const updateStatus = async (id: number, status: string) => {
+export const updateStatus = async (id: number, isHandled: boolean) => {
   const schedule = await prisma.maintenanceSchedule.findUnique({ where: { id } });
   if (!schedule) throw new Error("Lịch bảo trì không tồn tại");
-  return prisma.maintenanceSchedule.update({ where: { id }, data: { status } });
+  return prisma.maintenanceSchedule.update({ where: { id }, data: { isHandled } });
 };
 
 export const remove = async (id: number) => {
   const schedule = await prisma.maintenanceSchedule.findUnique({ where: { id } });
   if (!schedule) throw new Error("Lịch bảo trì không tồn tại");
+  
+  const workOrderCount = await prisma.workOrder.count({ where: { maintenanceScheduleId: id } });
+  if (workOrderCount > 0) throw new Error("Không thể xoá lịch bảo trì vì đã có Work Order liên quan");
+  
   return prisma.maintenanceSchedule.delete({ where: { id } });
 };
