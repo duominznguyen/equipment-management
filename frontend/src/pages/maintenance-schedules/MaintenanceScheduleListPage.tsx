@@ -32,22 +32,24 @@ import type { MaintenanceSchedule } from "@/types/maintenance-schedule.type";
 import { formatDate } from "@/utils/date";
 import { useAuthStore } from "@/stores/auth.store";
 import MaintenanceScheduleFormModal from "./MaintenanceScheduleFormModal";
+import CreateWorkOrderModal from "../work-orders/CreateWorkOrderModal";
+import { Wrench } from "lucide-react";
 
 const statusLabels: Record<string, string> = {
+  handled: "Đã xử lý",
   upcoming: "Sắp tới",
-  completed: "Hoàn thành",
-  overdue: "Quá hạn",
 };
 
 const statusVariants: Record<string, "default" | "secondary" | "destructive"> = {
+  handled: "secondary",
   upcoming: "default",
-  completed: "secondary",
-  overdue: "destructive",
 };
 
 const MaintenanceScheduleListPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState<MaintenanceSchedule | null>(null);
+  const [isWorkOrderModalOpen, setIsWorkOrderModalOpen] = useState(false);
+  const [workOrderData, setWorkOrderData] = useState<any>(null);
   const { page, pageSize, setPage, setPageSize } = usePagination();
   const { user } = useAuthStore();
   const isAdmin = user?.role === "admin";
@@ -85,27 +87,22 @@ const MaintenanceScheduleListPage = () => {
     {
       key: "device",
       title: "Thiết bị",
-      render: (_: any, record: MaintenanceSchedule) => record.device.name,
+      render: (_: any, record: any) => record.device?.name || "—",
     },
     {
-      key: "technician",
-      title: "Kỹ thuật viên",
-      render: (_: any, record: MaintenanceSchedule) => record.technician.fullName,
+      key: "nextMaintenanceDate",
+      title: "Ngày bảo trì tiếp theo",
+      render: (val: string) => val ? formatDate(val) : "—",
     },
     {
-      key: "scheduledDate",
-      title: "Ngày bảo trì",
-      render: (val: string) => formatDate(val),
+      key: "lastMaintenanceDate",
+      title: "Lần bảo trì cuối",
+      render: (val: string) => val ? formatDate(val) : "—",
     },
     {
-      key: "description",
-      title: "Mô tả",
-      render: (val: string) => val || "—",
-    },
-    {
-      key: "status",
+      key: "isHandled",
       title: "Trạng thái",
-      render: (val: string) => <Badge variant={statusVariants[val]}>{statusLabels[val]}</Badge>,
+      render: (val: boolean) => <Badge variant={val ? "secondary" : "default"}>{val ? "Đã xử lý" : "Sắp tới"}</Badge>,
     },
     ...(!isCustomer
       ? [
@@ -137,6 +134,22 @@ const MaintenanceScheduleListPage = () => {
                     ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
+                {isAdmin && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    title="Tạo Work Order"
+                    onClick={() => {
+                      setWorkOrderData({
+                        maintenanceScheduleId: record.id,
+                        referenceInfo: `Bảo trì định kỳ thiết bị: ${record.device.name}`,
+                      });
+                      setIsWorkOrderModalOpen(true);
+                    }}
+                  >
+                    <Wrench className="h-3 w-3" />
+                  </Button>
+                )}
                 {isAdmin && (
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
@@ -192,6 +205,15 @@ const MaintenanceScheduleListPage = () => {
       />
 
       {isAdmin && <MaintenanceScheduleFormModal open={isModalOpen} onClose={handleClose} schedule={selectedSchedule} />}
+
+      <CreateWorkOrderModal
+        open={isWorkOrderModalOpen}
+        onClose={() => {
+          setIsWorkOrderModalOpen(false);
+          setWorkOrderData(null);
+        }}
+        defaultData={workOrderData}
+      />
     </div>
   );
 };

@@ -14,7 +14,7 @@ import DeviceListPage from "@/pages/devices/DeviceListPage";
 import WarrantyContractListPage from "@/pages/warranty-contracts/WarrantyContractListPage";
 import AdminTicketListPage from "@/pages/tickets/AdminTicketListPage";
 import CustomerTicketListPage from "@/pages/tickets/CustomerTicketListPage";
-import MaintenanceRequestListPage from "@/pages/maintenance-requests/MaintenanceRequestListPage";
+import WorkOrderListPage from "@/pages/work-orders/WorkOrderListPage";
 import MaintenanceScheduleListPage from "@/pages/maintenance-schedules/MaintenanceScheduleListPage";
 import PartListPage from "@/pages/parts/PartListPage";
 import PartImportListPage from "@/pages/part-imports/PartImportListPage";
@@ -60,7 +60,7 @@ const router = createBrowserRouter([
       { path: "devices", element: <DeviceListPage /> },
       { path: "warranty-contracts", element: <WarrantyContractListPage /> },
       { path: "tickets", element: <AdminTicketListPage /> },
-      { path: "maintenance-requests", element: <MaintenanceRequestListPage /> },
+      { path: "work-orders", element: <WorkOrderListPage /> },
       { path: "maintenance-schedules", element: <MaintenanceScheduleListPage /> },
       { path: "parts", element: <PartListPage /> },
       { path: "part-imports", element: <PartImportListPage /> },
@@ -82,7 +82,7 @@ const router = createBrowserRouter([
     children: [
       // Trang mặc định khi vào /tech
       { index: true, element: <div className="p-4">Chào mừng Kỹ thuật viên!</div> },
-      { path: "maintenance-requests", element: <MaintenanceRequestListPage /> },
+      { path: "work-orders", element: <WorkOrderListPage /> },
       { path: "maintenance-schedules", element: <MaintenanceScheduleListPage /> },
       { path: "parts", element: <PartListPage /> },
       { path: "part-exports", element: <PartExportListPage /> },

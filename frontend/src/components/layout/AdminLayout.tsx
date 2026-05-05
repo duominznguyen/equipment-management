@@ -55,7 +55,7 @@ const menuItems: MenuItem[] = [
   { key: "device-categories", label: "Loại thiết bị", icon: <Package size={18} />, path: "/device-categories" },
   { key: "warranty-contracts", label: "Hợp đồng BH", icon: <ShieldCheck size={18} />, path: "/warranty-contracts" },
   { key: "tickets", label: "Ticket sự cố", icon: <AlertCircle size={18} />, path: "/tickets" },
-  { key: "maintenance-requests", label: "Phiếu bảo trì", icon: <Wrench size={18} />, path: "/maintenance-requests" },
+  { key: "work-orders", label: "Work Orders", icon: <Wrench size={18} />, path: "/work-orders" },
   { key: "maintenance-schedules", label: "Lịch bảo trì", icon: <Calendar size={18} />, path: "/maintenance-schedules" },
   {
     key: "warehouse",

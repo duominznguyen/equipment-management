@@ -39,13 +39,13 @@ export interface PartImportDetail {
 
 export interface PartExport {
   id: number;
-  exportCode: string;
-  maintenanceRequestId: number;
-  exportedBy: number;
+  technicianId: number;
+  workOrderId?: number | null;
   exportDate: string;
-  note?: string | null;
-  user: { id: number; username: string };
-  maintenanceRequest: { id: number; description: string };
+  reason?: string | null;
+  status: "pending" | "approved" | "completed" | "cancelled";
+  technician?: { id: number; fullName: string, user: { username: string } };
+  workOrder?: { id: number; workDescription?: string };
   details: PartExportDetail[];
 }
 
@@ -54,6 +54,5 @@ export interface PartExportDetail {
   exportId: number;
   partId: number;
   quantity: number;
-  unitPrice: number;
   part: Part;
 }

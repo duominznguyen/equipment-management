@@ -14,7 +14,6 @@ import {
   Calendar,
   Laptop,
   Package,
-  PackageMinus,
   LogOut,
   Menu,
   X,
@@ -25,10 +24,10 @@ import { cn } from "@/lib/utils";
 
 const menuItems = [
   {
-    key: "maintenance-requests",
-    label: "Phiếu bảo trì",
+    key: "work-orders",
+    label: "Work Orders",
     icon: <Wrench size={18} />,
-    path: "/tech/maintenance-requests",
+    path: "/tech/work-orders",
   },
   {
     key: "maintenance-schedules",

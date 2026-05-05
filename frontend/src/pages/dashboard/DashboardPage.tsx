@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { getOverview } from "@/services/report.service";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Laptop, Users, FileText, AlertCircle, ShieldCheck, Package, Wrench, TrendingUp } from "lucide-react";
+import { Laptop, Users, AlertCircle, ShieldCheck, Package, Wrench } from "lucide-react";
 
 const StatCard = ({
   title,

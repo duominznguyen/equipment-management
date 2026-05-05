@@ -69,7 +69,7 @@ const WarrantyContractListPage = () => {
     {
       key: "customer",
       title: "Khách hàng",
-      render: (_: any, record: WarrantyContract) => record.customer.fullName,
+      render: (_: any, record: any) => record.device?.customer?.fullName || "—",
     },
     {
       key: "startDate",

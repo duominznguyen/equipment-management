@@ -64,11 +64,10 @@ export const getPartExports = async (page = 1, pageSize = 10) => {
 };
 
 export const createPartExport = async (data: {
-  exportCode: string;
-  maintenanceRequestId: number;
-  exportDate: string;
-  note?: string;
-  details: { partId: number; quantity: number; unitPrice: number }[];
+  workOrderId?: number;
+  exportDate?: string;
+  reason?: string;
+  details: { partId: number; quantity: number }[];
 }) => {
   const res = await api.post("/part-exports", data);
   return res.data;

@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/DataTable";
-import { usePagination } from "@/hooks/usePagination";
 import { formatCurrency } from "@/utils/format";
 import { formatDate } from "@/utils/date";
 

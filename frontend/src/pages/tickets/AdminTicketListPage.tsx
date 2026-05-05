@@ -20,6 +20,8 @@ import { Trash2, RefreshCw } from "lucide-react";
 import type { Ticket } from "@/types/ticket.type";
 import { formatDateTime } from "@/utils/date";
 import TicketStatusModal from "./TicketStatusModal";
+import CreateWorkOrderModal from "../work-orders/CreateWorkOrderModal";
+import { Wrench } from "lucide-react";
 
 const priorityLabels: Record<string, string> = {
   low: "Thấp",
@@ -47,6 +49,8 @@ const statusVariants: Record<string, "default" | "secondary" | "outline" | "dest
 const AdminTicketListPage = () => {
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
+  const [isWorkOrderModalOpen, setIsWorkOrderModalOpen] = useState(false);
+  const [workOrderData, setWorkOrderData] = useState<any>(null);
   const { page, pageSize, setPage, setPageSize } = usePagination();
   const queryClient = useQueryClient();
 
@@ -65,7 +69,7 @@ const AdminTicketListPage = () => {
     {
       key: "customer",
       title: "Khách hàng",
-      render: (_: any, record: Ticket) => record.customer.fullName,
+      render: (_: any, record: any) => record.device?.customer?.fullName || "—",
     },
     {
       key: "device",
@@ -101,6 +105,20 @@ const AdminTicketListPage = () => {
             }}
           >
             <RefreshCw className="h-3 w-3" />
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            title="Tạo Work Order"
+            onClick={() => {
+              setWorkOrderData({
+                ticketId: record.id,
+                referenceInfo: `Xử lý sự cố: ${record.title}`,
+              });
+              setIsWorkOrderModalOpen(true);
+            }}
+          >
+            <Wrench className="h-3 w-3" />
           </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
@@ -154,6 +172,15 @@ const AdminTicketListPage = () => {
         }}
         ticket={selectedTicket}
         queryKey="tickets"
+      />
+
+      <CreateWorkOrderModal
+        open={isWorkOrderModalOpen}
+        onClose={() => {
+          setIsWorkOrderModalOpen(false);
+          setWorkOrderData(null);
+        }}
+        defaultData={workOrderData}
       />
     </div>
   );
