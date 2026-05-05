@@ -47,6 +47,7 @@ model Technician {
   user             User              @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   technicianSkills TechnicianSkill[]
   workOrders       WorkOrder[]
+  partExports      PartExport[]
 }
 
 model TechnicianSkill {
@@ -129,11 +130,11 @@ model Ticket {
 model MaintenanceSchedule {
   id                  Int       @id @default(autoincrement())
   deviceId            Int
-  lastMaintenanceDate DateTime @default(now())
+  lastMaintenanceDate DateTime  @default(now())
   nextMaintenanceDate DateTime?
-  leadTimeDays        Int      @default(7)
-  isHandled            Boolean  @default(false)
-  isContinueMaintain  Boolean  @default(true)
+  leadTimeDays        Int       @default(7)
+  isHandled           Boolean   @default(false)
+  isContinueMaintain  Boolean   @default(true)
 
   device     Device      @relation(fields: [deviceId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   workOrders WorkOrder[]
@@ -154,6 +155,7 @@ model WorkOrder {
   maintenanceSchedule MaintenanceSchedule? @relation(fields: [maintenanceScheduleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   technician          Technician           @relation(fields: [technicianId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   partUsages          PartUsage[]
+  partExports         PartExport[]
 }
 
 // ==========================================
@@ -171,6 +173,7 @@ model Part {
 
   partUsages        PartUsage[]
   partImportDetails PartImportDetail[]
+  partExportDetails PartExportDetail[]
 }
 
 model PartUsage {
@@ -203,5 +206,28 @@ model PartImportDetail {
   unitPrice Decimal @db.Decimal(18, 2)
 
   import PartImport @relation(fields: [importId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  part   Part       @relation(fields: [partId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model PartExport {
+  id           Int      @id @default(autoincrement())
+  technicianId Int
+  workOrderId  Int?
+  exportDate   DateTime @default(now())
+  reason       String?  @db.NVarChar(255)
+  status       String   @default("pending") @db.VarChar(20)
+
+  technician Technician         @relation(fields: [technicianId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  workOrder  WorkOrder?         @relation(fields: [workOrderId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  details    PartExportDetail[]
+}
+
+model PartExportDetail {
+  id       Int @id @default(autoincrement())
+  exportId Int
+  partId   Int
+  quantity Int
+
+  export PartExport @relation(fields: [exportId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   part   Part       @relation(fields: [partId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
