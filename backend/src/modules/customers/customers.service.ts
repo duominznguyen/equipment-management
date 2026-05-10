@@ -9,12 +9,15 @@ export const getAll = async (query: any) => {
   const where: any = {};
 
   if (search) {
-    where.OR = [
-      { fullName: { contains: search } },
-      { phone: { contains: search } },
-      { user: { username: { contains: search } } },
-      { user: { email: { contains: search } } },
-    ];
+    const searchTerms = search.trim().split(/\s+/);
+    where.AND = searchTerms.map((term: string) => ({
+      OR: [
+        { fullName: { contains: term } },
+        { phone: { contains: term } },
+        { user: { username: { contains: term } } },
+        { user: { email: { contains: term } } },
+      ],
+    }));
   }
 
   if (isActive !== undefined && isActive !== "") {

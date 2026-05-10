@@ -1,7 +1,7 @@
 import api from "./api";
 
-export const getTechnicians = async (page = 1, pageSize = 10) => {
-  const res = await api.get("/technicians", { params: { page, pageSize } });
+export const getTechnicians = async (page = 1, pageSize = 10, filters?: any) => {
+  const res = await api.get("/technicians", { params: { page, pageSize, ...filters } });
   return res.data;
 };
 
@@ -17,15 +17,13 @@ export const createTechnician = async (data: {
   return res.data;
 };
 
-export const updateTechnician = async (
-  id: number,
-  data: {
-    fullName?: string;
-    phone?: string;
-    specialization?: string;
-  },
-) => {
+export const updateTechnician = async (id: number, data: any) => {
   const res = await api.put(`/technicians/${id}`, data);
+  return res.data;
+};
+
+export const toggleLockTechnician = async (id: number, isActive: boolean, lockReason?: string) => {
+  const res = await api.patch(`/technicians/${id}/lock`, { isActive, lockReason });
   return res.data;
 };
 

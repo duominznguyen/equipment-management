@@ -3,13 +3,20 @@ export interface Technician {
   userId: number;
   fullName: string;
   phone: string;
-  specialization?: string | null;
+  technicianSkills: {
+    deviceCategoryId: number;
+    deviceCategory: {
+      id: number;
+      name: string;
+    };
+  }[];
   createdAt: string;
   user: {
     id: number;
     username: string;
     email: string;
     isActive: boolean;
+    lockReason?: string | null;
   };
 }
 
