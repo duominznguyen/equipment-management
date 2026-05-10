@@ -17,15 +17,13 @@ const createSchema = z.object({
   password: z.string().min(6, "Tối thiểu 6 ký tự"),
   fullName: z.string().min(1, "Vui lòng nhập họ tên"),
   phone: z.string().min(1, "Vui lòng nhập số điện thoại"),
-  address: z.string().min(1, "Vui lòng nhập địa chỉ"),
-  companyName: z.string().optional(),
+  additionalInfo: z.string().optional(),
 });
 
 const editSchema = z.object({
   fullName: z.string().min(1, "Vui lòng nhập họ tên"),
   phone: z.string().min(1, "Vui lòng nhập số điện thoại"),
-  address: z.string().min(1, "Vui lòng nhập địa chỉ"),
-  companyName: z.string().optional(),
+  additionalInfo: z.string().optional(),
 });
 
 // type CreateForm = z.infer<typeof createSchema>;
@@ -55,8 +53,7 @@ const CustomerFormModal = ({ open, onClose, customer }: Props) => {
       reset({
         fullName: customer.fullName,
         phone: customer.phone,
-        address: customer.address,
-        companyName: customer.companyName || "",
+        additionalInfo: customer.additionalInfo || "",
       });
     } else {
       reset({});
@@ -142,16 +139,8 @@ const CustomerFormModal = ({ open, onClose, customer }: Props) => {
           </div>
 
           <div className="space-y-2">
-            <Label>Địa chỉ</Label>
-            <Input placeholder="Nhập địa chỉ" {...register("address")} />
-            {errors.address && <p className="text-sm text-destructive">{errors.address.message as string}</p>}
-          </div>
-
-          <div className="space-y-2">
-            <Label>
-              Công ty <span className="text-muted-foreground">(tuỳ chọn)</span>
-            </Label>
-            <Input placeholder="Nhập tên công ty" {...register("companyName")} />
+            <Label>Thông tin thêm (Địa chỉ, Công ty...)</Label>
+            <Input placeholder="Nhập thông tin thêm" {...register("additionalInfo")} />
           </div>
 
           {error && (

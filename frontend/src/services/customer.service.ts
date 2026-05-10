@@ -1,7 +1,7 @@
 import api from "./api";
 
-export const getCustomers = async (page = 1, pageSize = 10) => {
-  const res = await api.get("/customers", { params: { page, pageSize } });
+export const getCustomers = async (page = 1, pageSize = 10, filters?: any) => {
+  const res = await api.get("/customers", { params: { page, pageSize, ...filters } });
   return res.data;
 };
 
@@ -18,16 +18,13 @@ export const createCustomer = async (data: {
   return res.data;
 };
 
-export const updateCustomer = async (
-  id: number,
-  data: {
-    fullName?: string;
-    phone?: string;
-    address?: string;
-    companyName?: string;
-  },
-) => {
+export const updateCustomer = async (id: number, data: any) => {
   const res = await api.put(`/customers/${id}`, data);
+  return res.data;
+};
+
+export const toggleLockCustomer = async (id: number, isActive: boolean, lockReason?: string) => {
+  const res = await api.patch(`/customers/${id}/lock`, { isActive, lockReason });
   return res.data;
 };
 

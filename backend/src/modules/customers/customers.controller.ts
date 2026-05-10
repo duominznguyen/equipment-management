@@ -42,3 +42,13 @@ export const remove = async (req: AuthRequest, res: Response) => {
     res.status(400).json({ message: error.message });
   }
 };
+
+export const toggleLock = async (req: AuthRequest, res: Response) => {
+  try {
+    const { isActive, lockReason } = req.body;
+    await CustomersService.toggleLock(Number(req.params.id), isActive, lockReason);
+    res.json({ message: "Cập nhật trạng thái thành công" });
+  } catch (error: any) {
+    res.status(400).json({ message: error.message });
+  }
+};
