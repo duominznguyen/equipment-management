@@ -48,7 +48,6 @@ const menuItems: MenuItem[] = [
     children: [
       { key: "customers", label: "Khách hàng", path: "/customers" },
       { key: "technicians", label: "Kỹ thuật viên", path: "/technicians" },
-      { key: "users", label: "Tài khoản", path: "/users" },
     ],
   },
   { key: "devices", label: "Thiết bị", icon: <Laptop size={18} />, path: "/devices" },

@@ -6,7 +6,6 @@ import TechnicianLayout from "@/components/layout/TechnicianLayout";
 import CustomerLayout from "@/components/layout/CustomerLayout";
 import LoginPage from "@/pages/auth/LoginPage";
 import DashboardPage from "@/pages/dashboard/DashboardPage";
-import UserListPage from "@/pages/users/UserListPage";
 import CustomerListPage from "@/pages/customers/CustomerListPage";
 import TechnicianListPage from "@/pages/technicians/TechnicianListPage";
 import DeviceCategoryListPage from "@/pages/device-categories/DeviceCategoryListPage";
@@ -53,7 +52,6 @@ const router = createBrowserRouter([
     ),
     children: [
       { path: "dashboard", element: <DashboardPage /> },
-      { path: "users", element: <UserListPage /> },
       { path: "customers", element: <CustomerListPage /> },
       { path: "technicians", element: <TechnicianListPage /> },
       { path: "device-categories", element: <DeviceCategoryListPage /> },
