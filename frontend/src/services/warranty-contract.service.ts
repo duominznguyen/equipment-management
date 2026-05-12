@@ -1,7 +1,7 @@
 import api from "./api";
 
-export const getWarrantyContracts = async (page = 1, pageSize = 10) => {
-  const res = await api.get("/warranty-contracts", { params: { page, pageSize } });
+export const getWarrantyContracts = async (page = 1, pageSize = 10, filters?: any) => {
+  const res = await api.get("/warranty-contracts", { params: { page, pageSize, ...filters } });
   return res.data;
 };
 

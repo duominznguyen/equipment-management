@@ -3,7 +3,48 @@ import { getPaginationParams, paginate } from "../../utils/pagination.js";
 
 export const getAll = async (query: any) => {
   const params = getPaginationParams(query);
+  const { search, sortBy, sortOrder, status, startDate, endDate } = query;
+
+  const where: any = {};
+
+  if (search) {
+    const searchTerms = search.trim().split(/\s+/);
+    where.AND = searchTerms.map((term: string) => ({
+      OR: [
+        { contractNumber: { contains: term } },
+        { terms: { contains: term } },
+        { device: { name: { contains: term } } },
+        { device: { serialNumber: { contains: term } } },
+        { device: { customer: { fullName: { contains: term } } } },
+      ],
+    }));
+  }
+
+  if (status && status !== "all") {
+    where.status = status;
+  }
+
+  if (startDate || endDate) {
+    where.createdAt = {};
+    if (startDate) {
+      where.createdAt.gte = new Date(startDate);
+    }
+    if (endDate) {
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      where.createdAt.lte = end;
+    }
+  }
+
+  const orderBy: any = {};
+  if (sortBy === "contractNumber" || sortBy === "startDate" || sortBy === "endDate" || sortBy === "createdAt") {
+    orderBy[sortBy] = sortOrder || "desc";
+  } else {
+    orderBy.createdAt = "desc";
+  }
+
   return paginate(prisma.warrantyContract, params, {
+    where,
     include: {
       device: { 
         select: { 
@@ -14,7 +55,7 @@ export const getAll = async (query: any) => {
         } 
       },
     },
-    orderBy: { createdAt: "desc" },
+    orderBy,
   });
 };
 
