@@ -40,12 +40,10 @@ export interface PartImportDetail {
 export interface PartExport {
   id: number;
   technicianId: number;
-  workOrderId?: number | null;
   exportDate: string;
   reason?: string | null;
   status: "pending" | "approved" | "completed" | "cancelled";
   technician?: { id: number; fullName: string, user: { username: string } };
-  workOrder?: { id: number; workDescription?: string };
   details: PartExportDetail[];
 }
 

@@ -157,7 +157,6 @@ model WorkOrder {
   maintenanceSchedule MaintenanceSchedule? @relation(fields: [maintenanceScheduleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   technician          Technician           @relation(fields: [technicianId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   partUsages          PartUsage[]
-  partExports         PartExport[]
 }
 
 // ==========================================
@@ -214,13 +213,11 @@ model PartImportDetail {
 model PartExport {
   id           Int      @id @default(autoincrement())
   technicianId Int
-  workOrderId  Int?
   exportDate   DateTime @default(now())
   reason       String?  @db.NVarChar(255)
   status       String   @default("pending") @db.VarChar(20)
 
   technician Technician         @relation(fields: [technicianId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  workOrder  WorkOrder?         @relation(fields: [workOrderId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   details    PartExportDetail[]
 }
 

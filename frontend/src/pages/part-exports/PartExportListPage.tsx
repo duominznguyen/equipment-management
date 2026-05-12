@@ -41,11 +41,6 @@ const PartExportListPage = () => {
       render: (_: any, record: PartExport) => record.technician?.fullName || '—'
     },
     {
-      key: 'workOrder',
-      title: 'Work Order',
-      render: (_: any, record: PartExport) => record.workOrder ? `#${record.workOrder.id}` : '—'
-    },
-    {
       key: 'details',
       title: 'SL Chi tiết',
       render: (_: any, record: PartExport) => `${record.details?.length || 0} mục`

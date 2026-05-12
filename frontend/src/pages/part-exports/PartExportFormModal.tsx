@@ -20,7 +20,6 @@ import {
 import { Loader2, PlusCircle, Trash2 } from 'lucide-react'
 
 const schema = z.object({
-  workOrderId: z.string().optional(),
   exportDate: z.string().min(1, 'Vui lòng chọn ngày xuất'),
   reason: z.string().optional(),
 })
@@ -69,7 +68,6 @@ const PartExportFormModal = ({ open, onClose }: Props) => {
   const mutation = useMutation({
     mutationFn: (data: any) => createPartExport({
       ...data,
-      workOrderId: data.workOrderId ? Number(data.workOrderId) : undefined,
       details: details.map(d => ({
         partId: Number(d.partId),
         quantity: Number(d.quantity),
@@ -98,23 +96,7 @@ const PartExportFormModal = ({ open, onClose }: Props) => {
         </DialogHeader>
 
         <form onSubmit={handleSubmit((data) => mutation.mutate(data))} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Work Order liên quan <span className="text-muted-foreground">(tuỳ chọn)</span></Label>
-              <Select onValueChange={(val) => setValue('workOrderId', val === 'none' ? '' : val)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Chọn Work Order" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Không liên kết</SelectItem>
-                  {workOrdersData?.data?.map((r: any) => (
-                    <SelectItem key={r.id} value={String(r.id)}>
-                      #{r.id} - KTV: {r.technician?.fullName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="grid grid-cols-1 gap-4">
             <div className="space-y-2">
               <Label>Ngày xuất</Label>
               <Input type="date" {...register('exportDate')} />

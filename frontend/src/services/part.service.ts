@@ -1,7 +1,7 @@
 import api from "./api";
 
-export const getParts = async (page = 1, pageSize = 10) => {
-  const res = await api.get("/parts", { params: { page, pageSize } });
+export const getParts = async (page = 1, pageSize = 10, filters?: any) => {
+  const res = await api.get("/parts", { params: { page, pageSize, ...filters } });
   return res.data;
 };
 
@@ -64,7 +64,6 @@ export const getPartExports = async (page = 1, pageSize = 10) => {
 };
 
 export const createPartExport = async (data: {
-  workOrderId?: number;
   exportDate?: string;
   reason?: string;
   details: { partId: number; quantity: number }[];

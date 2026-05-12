@@ -6,7 +6,6 @@ export const getAll = async (query: any) => {
   return paginate(prisma.partExport, params, {
     include: {
       technician: { select: { id: true, fullName: true, user: { select: { username: true } } } },
-      workOrder: { select: { id: true, workDescription: true } },
       details: { include: { part: true } },
     },
     orderBy: { exportDate: "desc" },
@@ -18,7 +17,6 @@ export const getById = async (id: number) => {
     where: { id },
     include: {
       technician: { select: { id: true, fullName: true, user: { select: { username: true } } } },
-      workOrder: true,
       details: { include: { part: true } },
     },
   });
@@ -29,7 +27,6 @@ export const getById = async (id: number) => {
 export const create = async (
   userId: number,
   data: {
-    workOrderId?: number;
     exportDate?: string;
     reason?: string;
     details: { partId: number; quantity: number }[];
@@ -52,7 +49,6 @@ export const create = async (
     const partExport = await tx.partExport.create({
       data: {
         technicianId: technician.id,
-        workOrderId: data.workOrderId,
         exportDate: data.exportDate ? new Date(data.exportDate) : new Date(),
         reason: data.reason,
         status: "completed", 
@@ -65,7 +61,6 @@ export const create = async (
       },
       include: {
         technician: { select: { id: true, fullName: true } },
-        workOrder: { select: { id: true, workDescription: true } },
         details: { include: { part: true } },
       },
     });
