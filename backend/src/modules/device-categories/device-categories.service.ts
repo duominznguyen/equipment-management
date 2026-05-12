@@ -3,8 +3,30 @@ import { getPaginationParams, paginate } from "../../utils/pagination.js";
 
 export const getAll = async (query: any) => {
   const params = getPaginationParams(query);
+  const { search, sortBy, sortOrder } = query;
+
+  const where: any = {};
+
+  if (search) {
+    const searchTerms = search.trim().split(/\s+/);
+    where.AND = searchTerms.map((term: string) => ({
+      OR: [
+        { name: { contains: term } },
+        { description: { contains: term } },
+      ],
+    }));
+  }
+
+  const orderBy: any = {};
+  if (sortBy === "name" || sortBy === "id") {
+    orderBy[sortBy] = sortOrder || "desc";
+  } else {
+    orderBy.id = "asc";
+  }
+
   return paginate(prisma.deviceCategory, params, {
-    orderBy: { id: "asc" },
+    where,
+    orderBy,
   });
 };
 
