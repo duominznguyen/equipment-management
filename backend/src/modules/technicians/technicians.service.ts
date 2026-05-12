@@ -10,14 +10,19 @@ export const getAll = async (query: any) => {
 
   if (search) {
     const searchTerms = search.trim().split(/\s+/);
-    where.AND = searchTerms.map((term: string) => ({
-      OR: [
+    where.AND = searchTerms.map((term: string) => {
+      const parsedId = parseInt(term.replace(/^KTV/i, ""), 10);
+      const orConditions: any[] = [
         { fullName: { contains: term } },
         { phone: { contains: term } },
         { user: { username: { contains: term } } },
         { user: { email: { contains: term } } },
-      ],
-    }));
+      ];
+      if (!isNaN(parsedId)) {
+        orConditions.push({ id: parsedId });
+      }
+      return { OR: orConditions };
+    });
   }
 
   if (isActive !== undefined && isActive !== "") {

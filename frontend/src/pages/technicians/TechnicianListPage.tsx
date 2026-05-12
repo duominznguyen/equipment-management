@@ -91,6 +91,11 @@ const TechnicianListPage = () => {
   };
 
   const columns = [
+    {
+      key: "id",
+      title: "Mã KTV",
+      render: (_: any, record: Technician) => `KTV${record.id.toString().padStart(3, "0")}`,
+    },
     { key: "fullName", title: "Họ tên" },
     {
       key: "username",
@@ -196,7 +201,7 @@ const TechnicianListPage = () => {
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Tìm kiếm họ tên, username, email, SĐT..."
+              placeholder="Tìm kiếm mã KTV, họ tên, username, email, SĐT..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-8 bg-background w-full"

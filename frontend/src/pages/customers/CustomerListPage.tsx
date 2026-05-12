@@ -84,6 +84,11 @@ const CustomerListPage = () => {
 
   const columns = [
     {
+      key: "id",
+      title: "Mã KH",
+      render: (_: any, record: Customer) => `KH${record.id.toString().padStart(3, "0")}`,
+    },
+    {
       key: "fullName",
       title: "Họ tên",
     },
@@ -104,7 +109,11 @@ const CustomerListPage = () => {
     {
       key: "additionalInfo",
       title: "Thông tin thêm",
-      render: (val: string) => val || "—",
+      render: (val: string) => val ? (
+        <div className="max-w-[150px] lg:max-w-[200px] truncate" title={val}>
+          {val}
+        </div>
+      ) : "—",
     },
     {
       key: "isActive",
@@ -184,7 +193,7 @@ const CustomerListPage = () => {
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Tìm kiếm họ tên, username, email, SĐT..."
+              placeholder="Tìm kiếm mã KH, họ tên, username, email, SĐT..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-8 bg-background w-full"
