@@ -2,15 +2,52 @@ import prisma from '../../config/database.js'
 import { getPaginationParams, paginate } from '../../utils/pagination.js'
 
 export const getAll = async (query: any) => {
-  const params = getPaginationParams(query)
+  const params = getPaginationParams(query);
+  const { search, startDate, endDate, sortBy, sortOrder } = query;
+
+  const where: any = {};
+
+  if (search) {
+    const searchTerms = search.trim().split(/\s+/);
+    where.AND = searchTerms.map((term: string) => {
+      const isNumeric = !isNaN(Number(term));
+      const orConditions: any[] = [
+        { supplier: { contains: term } },
+        { note: { contains: term } },
+      ];
+      if (isNumeric) {
+        orConditions.push({ id: Number(term) });
+      }
+      return { OR: orConditions };
+    });
+  }
+
+  if (startDate || endDate) {
+    where.importDate = {};
+    if (startDate) where.importDate.gte = new Date(startDate);
+    if (endDate) {
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      where.importDate.lte = end;
+    }
+  }
+
+  const orderBy: any = {};
+  if (sortBy === "importDate" || sortBy === "totalCost" || sortBy === "id") {
+    orderBy[sortBy] = sortOrder || "desc";
+  } else {
+    orderBy.importDate = "desc";
+  }
+
   return paginate(prisma.partImport, params, {
+    where,
     include: {
       user: { select: { id: true, username: true } },
       details: { include: { part: true } }
     },
-    orderBy: { importDate: 'desc' }
-  })
-}
+    orderBy
+  });
+};
 
 export const getById = async (id: number) => {
   const partImport = await prisma.partImport.findUnique({

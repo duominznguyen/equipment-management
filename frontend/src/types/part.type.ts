@@ -18,7 +18,6 @@ export interface PaginatedParts {
 
 export interface PartImport {
   id: number;
-  importCode: string;
   importedBy: number;
   supplier: string;
   importDate: string;

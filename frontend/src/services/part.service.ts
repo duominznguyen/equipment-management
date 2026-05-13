@@ -41,13 +41,17 @@ export const deletePart = async (id: number) => {
 };
 
 // Part Imports
-export const getPartImports = async (page = 1, pageSize = 10) => {
-  const res = await api.get("/part-imports", { params: { page, pageSize } });
+export const getPartImports = async (page = 1, pageSize = 10, filters?: any) => {
+  const res = await api.get("/part-imports", { params: { page, pageSize, ...filters } });
+  return res.data;
+};
+
+export const getPartImportById = async (id: number) => {
+  const res = await api.get(`/part-imports/${id}`);
   return res.data;
 };
 
 export const createPartImport = async (data: {
-  importCode: string;
   supplier: string;
   importDate: string;
   note?: string;

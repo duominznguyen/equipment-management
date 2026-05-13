@@ -17,6 +17,7 @@ import WorkOrderListPage from "@/pages/work-orders/WorkOrderListPage";
 import MaintenanceScheduleListPage from "@/pages/maintenance-schedules/MaintenanceScheduleListPage";
 import PartListPage from "@/pages/parts/PartListPage";
 import PartImportListPage from "@/pages/part-imports/PartImportListPage";
+import PartImportDetailPage from "@/pages/part-imports/PartImportDetailPage";
 import PartExportListPage from "@/pages/part-exports/PartExportListPage";
 import ReportsPage from "@/pages/reports/ReportsPage";
 import MyDevicesPage from "@/pages/devices/MyDevicesPage";
@@ -62,6 +63,7 @@ const router = createBrowserRouter([
       { path: "maintenance-schedules", element: <MaintenanceScheduleListPage /> },
       { path: "parts", element: <PartListPage /> },
       { path: "part-imports", element: <PartImportListPage /> },
+      { path: "part-imports/:id", element: <PartImportDetailPage /> },
       { path: "part-exports", element: <PartExportListPage /> },
       { path: "reports", element: <ReportsPage /> },
 
