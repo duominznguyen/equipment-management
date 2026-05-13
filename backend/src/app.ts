@@ -12,6 +12,7 @@ import ticketsRouter from "./modules/tickets/tickets.router.js";
 import maintenanceSchedulesRouter from "./modules/maintenance-schedules/maintenance-schedules.router.js";
 import partsRouter from "./modules/parts/parts.router.js";
 import partImportsRouter from "./modules/part-imports/part-imports.router.js";
+import partExportsRouter from "./modules/part-exports/part-exports.router.js";
 import workOrdersRouter from "./modules/work-orders/work-orders.router.js";
 import reportsRouter from "./modules/reports/reports.router.js";
 
@@ -34,6 +35,7 @@ app.use("/tickets", ticketsRouter);
 app.use("/maintenance-schedules", maintenanceSchedulesRouter);
 app.use("/parts", partsRouter);
 app.use("/part-imports", partImportsRouter);
+app.use("/part-exports", partExportsRouter);
 app.use("/work-orders", workOrdersRouter);
 app.use("/reports", reportsRouter);
 

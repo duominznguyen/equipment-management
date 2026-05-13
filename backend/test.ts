@@ -1,8 +1,15 @@
-import { getAll } from './src/modules/device-categories/device-categories.service.js';
-getAll({ sortBy: 'createdAt', sortOrder: 'desc' }).then(res => {
-  console.log(res);
-  process.exit(0);
-}).catch(err => {
-  console.error(err);
-  process.exit(1);
-});
+import prisma from './src/config/database.js';
+prisma.partExport.findMany({
+  include: {
+    technician: {
+      select: {
+        id: true,
+        fullName: true,
+        user: { select: { username: true } }
+      }
+    },
+    details: { include: { part: true } }
+  }
+}).then(data => {
+  console.log(JSON.stringify(data, null, 2));
+}).catch(console.error).finally(() => prisma.$disconnect());

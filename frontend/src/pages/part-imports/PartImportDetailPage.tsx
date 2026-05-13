@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { getPartImportById } from "@/services/part.service";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Package } from "lucide-react";
-import { formatDate } from "@/utils/date";
+import { formatDateTime } from "@/utils/date";
 import { formatCurrency } from "@/utils/format";
 import { DataTable } from "@/components/DataTable";
 
@@ -70,7 +70,7 @@ const PartImportDetailPage = () => {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Ngày nhập</p>
-              <p className="font-medium">{formatDate(partImport.importDate)}</p>
+              <p className="font-medium">{formatDateTime(partImport.importDate)}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Tổng tiền</p>
@@ -94,6 +94,8 @@ const PartImportDetailPage = () => {
               total={partImport.details.length}
               page={1}
               pageSize={100}
+              onPageChange={() => {}}
+              onPageSizeChange={() => {}}
             />
           </div>
         </div>

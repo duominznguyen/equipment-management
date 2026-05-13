@@ -66,6 +66,12 @@ export const create = async (userId: number, data: {
   importDate: string; note?: string
   details: { partId: number; quantity: number; unitPrice: number }[]
 }) => {
+  if (!data.details || data.details.length === 0) throw new Error("Phải có ít nhất một linh kiện");
+  for (const detail of data.details) {
+    if (detail.quantity <= 0) throw new Error("Số lượng phải lớn hơn 0");
+    if (detail.unitPrice < 0) throw new Error("Đơn giá không được âm");
+  }
+
   const totalCost = data.details.reduce((sum, d) => sum + d.quantity * d.unitPrice, 0)
 
   return prisma.$transaction(async (tx) => {

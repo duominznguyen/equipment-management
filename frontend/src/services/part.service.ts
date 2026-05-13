@@ -72,8 +72,13 @@ export const deletePartImport = async (id: number) => {
 };
 
 // Part Exports
-export const getPartExports = async (page = 1, pageSize = 10) => {
-  const res = await api.get("/part-exports", { params: { page, pageSize } });
+export const getPartExports = async (page = 1, pageSize = 10, filters?: any) => {
+  const res = await api.get("/part-exports", { params: { page, pageSize, ...filters } });
+  return res.data;
+};
+
+export const getPartExportById = async (id: number) => {
+  const res = await api.get(`/part-exports/${id}`);
   return res.data;
 };
 
@@ -83,5 +88,20 @@ export const createPartExport = async (data: {
   details: { partId: number; quantity: number }[];
 }) => {
   const res = await api.post("/part-exports", data);
+  return res.data;
+};
+
+export const updatePartExportStatus = async (id: number, status: string, rejectReason?: string) => {
+  const res = await api.put(`/part-exports/${id}/status`, { status, rejectReason });
+  return res.data;
+};
+
+export const updatePartExport = async (id: number, data: { reason?: string }) => {
+  const res = await api.put(`/part-exports/${id}`, data);
+  return res.data;
+};
+
+export const deletePartExport = async (id: number) => {
+  const res = await api.delete(`/part-exports/${id}`);
   return res.data;
 };

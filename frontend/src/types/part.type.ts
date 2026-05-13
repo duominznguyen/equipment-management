@@ -38,11 +38,13 @@ export interface PartImportDetail {
 
 export interface PartExport {
   id: number;
-  technicianId: number;
+  technicianId: number | null;
+  userId: number | null;
   exportDate: string;
   reason?: string | null;
   status: "pending" | "approved" | "completed" | "cancelled";
   technician?: { id: number; fullName: string, user: { username: string } };
+  user?: { id: number; username: string };
   details: PartExportDetail[];
 }
 

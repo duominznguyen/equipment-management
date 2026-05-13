@@ -43,7 +43,7 @@ const PartExportFormModal = ({ open, onClose }: Props) => {
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<any>({
     resolver: zodResolver(schema),
     defaultValues: {
-      exportDate: new Date().toISOString().split('T')[0]
+      exportDate: new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)
     }
   })
 
@@ -99,7 +99,7 @@ const PartExportFormModal = ({ open, onClose }: Props) => {
           <div className="grid grid-cols-1 gap-4">
             <div className="space-y-2">
               <Label>Ngày xuất</Label>
-              <Input type="date" {...register('exportDate')} />
+              <Input type="datetime-local" {...register('exportDate')} />
               {errors.exportDate && <p className="text-sm text-destructive">{errors.exportDate.message as string}</p>}
             </div>
           </div>

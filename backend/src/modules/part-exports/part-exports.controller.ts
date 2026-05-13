@@ -13,6 +13,21 @@ export const getById = async (req: AuthRequest, res: Response) => {
 }
 
 export const create = async (req: AuthRequest, res: Response) => {
-  try { res.status(201).json(await Service.create(req.user!.id, req.body)) }
+  try { res.status(201).json(await Service.create(req.user!, req.body)) }
+  catch (error: any) { res.status(400).json({ message: error.message }) }
+}
+
+export const updateStatus = async (req: AuthRequest, res: Response) => {
+  try { res.json(await Service.updateStatus(Number(req.params.id), req.body.status, req.body.rejectReason)) }
+  catch (error: any) { res.status(400).json({ message: error.message }) }
+}
+
+export const update = async (req: AuthRequest, res: Response) => {
+  try { res.json(await Service.update(Number(req.params.id), req.body)) }
+  catch (error: any) { res.status(400).json({ message: error.message }) }
+}
+
+export const remove = async (req: AuthRequest, res: Response) => {
+  try { await Service.remove(Number(req.params.id)); res.json({ message: 'Xoá thành công' }) }
   catch (error: any) { res.status(400).json({ message: error.message }) }
 }

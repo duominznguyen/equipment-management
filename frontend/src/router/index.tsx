@@ -19,6 +19,7 @@ import PartListPage from "@/pages/parts/PartListPage";
 import PartImportListPage from "@/pages/part-imports/PartImportListPage";
 import PartImportDetailPage from "@/pages/part-imports/PartImportDetailPage";
 import PartExportListPage from "@/pages/part-exports/PartExportListPage";
+import PartExportDetailPage from "@/pages/part-exports/PartExportDetailPage";
 import ReportsPage from "@/pages/reports/ReportsPage";
 import MyDevicesPage from "@/pages/devices/MyDevicesPage";
 import MyWarrantiesPage from "@/pages/warranty-contracts/MyWarrantiesPage";
@@ -65,6 +66,7 @@ const router = createBrowserRouter([
       { path: "part-imports", element: <PartImportListPage /> },
       { path: "part-imports/:id", element: <PartImportDetailPage /> },
       { path: "part-exports", element: <PartExportListPage /> },
+      { path: "part-exports/:id", element: <PartExportDetailPage /> },
       { path: "reports", element: <ReportsPage /> },
 
       // Các child route admin khác
@@ -86,6 +88,7 @@ const router = createBrowserRouter([
       { path: "maintenance-schedules", element: <MaintenanceScheduleListPage /> },
       { path: "parts", element: <PartListPage /> },
       { path: "part-exports", element: <PartExportListPage /> },
+      { path: "part-exports/:id", element: <PartExportDetailPage /> },
       // Các child route tech khác
     ],
   },

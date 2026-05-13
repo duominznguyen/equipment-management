@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { useNavigate } from 'react-router-dom'
 import type { PartImport } from '@/types/part.type'
-import { formatDate } from '@/utils/date'
+import { formatDateTime } from '@/utils/date'
 import { formatCurrency } from '@/utils/format'
 import PartImportFormModal from './PartImportFormModal'
 import PartImportEditModal from './PartImportEditModal'
@@ -70,7 +70,7 @@ const PartImportListPage = () => {
     {
       key: 'importDate',
       title: 'Ngày nhập',
-      render: (val: string) => formatDate(val)
+      render: (val: string) => formatDateTime(val)
     },
     {
       key: 'totalCost',
