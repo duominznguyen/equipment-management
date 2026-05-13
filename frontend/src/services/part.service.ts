@@ -61,6 +61,16 @@ export const createPartImport = async (data: {
   return res.data;
 };
 
+export const updatePartImport = async (id: number, data: { supplier?: string; note?: string }) => {
+  const res = await api.put(`/part-imports/${id}`, data);
+  return res.data;
+};
+
+export const deletePartImport = async (id: number) => {
+  const res = await api.delete(`/part-imports/${id}`);
+  return res.data;
+};
+
 // Part Exports
 export const getPartExports = async (page = 1, pageSize = 10) => {
   const res = await api.get("/part-exports", { params: { page, pageSize } });

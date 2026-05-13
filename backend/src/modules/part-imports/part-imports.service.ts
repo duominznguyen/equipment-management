@@ -101,3 +101,47 @@ export const create = async (userId: number, data: {
     return partImport
   })
 }
+
+export const update = async (id: number, data: { supplier?: string; note?: string }) => {
+  const partImport = await prisma.partImport.findUnique({ where: { id } });
+  if (!partImport) throw new Error('Phiếu nhập không tồn tại');
+
+  return prisma.partImport.update({
+    where: { id },
+    data: {
+      supplier: data.supplier,
+      note: data.note,
+    }
+  });
+};
+
+export const remove = async (id: number) => {
+  const partImport = await prisma.partImport.findUnique({
+    where: { id },
+    include: { details: true }
+  });
+  if (!partImport) throw new Error('Phiếu nhập không tồn tại');
+
+  return prisma.$transaction(async (tx) => {
+    // Kiểm tra tồn kho trước khi xóa
+    for (const detail of partImport.details) {
+      const part = await tx.part.findUnique({ where: { id: detail.partId } });
+      if (!part) throw new Error(`Linh kiện ID ${detail.partId} không tồn tại`);
+      if (part.stockQuantity < detail.quantity) {
+        throw new Error(`Không thể xóa: Số lượng tồn kho hiện tại của linh kiện "${part.name}" (${part.stockQuantity}) nhỏ hơn số lượng nhập (${detail.quantity}).`);
+      }
+    }
+
+    // Giảm tồn kho
+    for (const detail of partImport.details) {
+      await tx.part.update({
+        where: { id: detail.partId },
+        data: { stockQuantity: { decrement: detail.quantity } }
+      });
+    }
+
+    // Xóa chi tiết và phiếu nhập
+    await tx.partImportDetail.deleteMany({ where: { importId: id } });
+    return tx.partImport.delete({ where: { id } });
+  });
+};

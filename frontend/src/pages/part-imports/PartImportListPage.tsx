@@ -1,22 +1,45 @@
 import { useState, useEffect } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { getPartImports } from '@/services/part.service'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { getPartImports, deletePartImport } from '@/services/part.service'
 import { DataTable } from '@/components/DataTable'
 import { usePagination } from '@/hooks/usePagination'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { PlusCircle, Eye, Search, ArrowUp, ArrowDown } from 'lucide-react'
+import { PlusCircle, Eye, Search, ArrowUp, ArrowDown, Pencil, Trash2 } from 'lucide-react'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { useNavigate } from 'react-router-dom'
 import type { PartImport } from '@/types/part.type'
 import { formatDate } from '@/utils/date'
 import { formatCurrency } from '@/utils/format'
 import PartImportFormModal from './PartImportFormModal'
+import PartImportEditModal from './PartImportEditModal'
 
 const PartImportListPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [editingImport, setEditingImport] = useState<PartImport | null>(null)
+  const [deletingImport, setDeletingImport] = useState<PartImport | null>(null)
   const { page, pageSize, setPage, setPageSize } = usePagination()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => deletePartImport(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['part-imports'] })
+      queryClient.invalidateQueries({ queryKey: ['parts'] })
+      setDeletingImport(null)
+    },
+  })
 
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
@@ -73,9 +96,17 @@ const PartImportListPage = () => {
       key: 'actions',
       title: 'Thao tác',
       render: (_: any, record: PartImport) => (
-        <Button size="sm" variant="outline" onClick={() => navigate(`/part-imports/${record.id}`)} title="Xem chi tiết">
-          <Eye className="h-4 w-4" />
-        </Button>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={() => navigate(`/part-imports/${record.id}`)} title="Xem chi tiết">
+            <Eye className="h-4 w-4" />
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => setEditingImport(record)} title="Chỉnh sửa">
+            <Pencil className="h-4 w-4" />
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => setDeletingImport(record)} title="Xóa phiếu nhập">
+            <Trash2 className="h-4 w-4 text-destructive" />
+          </Button>
+        </div>
       )
     }
   ]
@@ -169,6 +200,45 @@ const PartImportListPage = () => {
         open={isModalOpen}
         onClose={() => setIsModalOpen(false)}
       />
+
+      <PartImportEditModal
+        open={!!editingImport}
+        onClose={() => setEditingImport(null)}
+        partImport={editingImport}
+      />
+
+      <AlertDialog open={!!deletingImport} onOpenChange={(o) => !o && setDeletingImport(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xóa phiếu nhập kho</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn xóa phiếu nhập <strong>PN{deletingImport?.id.toString().padStart(4, '0')}</strong> không?
+              Hành động này sẽ trừ ngược lại số lượng tồn kho của các linh kiện trong phiếu nhập này.
+              Lưu ý: Nếu số lượng tồn kho hiện tại không đủ để trừ, bạn sẽ không thể xóa phiếu nhập.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          
+          {deleteMutation.isError && (
+            <div className="text-sm text-destructive mt-2 p-2 bg-destructive/10 rounded">
+              {(deleteMutation.error as any)?.response?.data?.message || 'Có lỗi xảy ra khi xóa'}
+            </div>
+          )}
+
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteMutation.isPending}>Hủy</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={(e) => {
+                e.preventDefault()
+                if (deletingImport) deleteMutation.mutate(deletingImport.id)
+              }}
+              disabled={deleteMutation.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteMutation.isPending ? 'Đang xóa...' : 'Xóa'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
