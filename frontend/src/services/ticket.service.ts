@@ -1,7 +1,7 @@
 import api from "./api";
 
-export const getTickets = async (page = 1, pageSize = 10) => {
-  const res = await api.get("/tickets", { params: { page, pageSize } });
+export const getTickets = async (page = 1, pageSize = 10, filters?: any) => {
+  const res = await api.get("/tickets", { params: { page, pageSize, ...filters } });
   return res.data;
 };
 
@@ -20,8 +20,8 @@ export const createTicket = async (data: {
   return res.data;
 };
 
-export const updateTicketStatus = async (id: number, status: string) => {
-  const res = await api.patch(`/tickets/${id}/status`, { status });
+export const updateTicketStatus = async (id: number, status: string, rejectionReason?: string) => {
+  const res = await api.patch(`/tickets/${id}/status`, { status, rejectionReason });
   return res.data;
 };
 

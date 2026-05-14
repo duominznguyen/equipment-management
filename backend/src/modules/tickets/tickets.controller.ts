@@ -37,7 +37,7 @@ export const create = async (req: AuthRequest, res: Response) => {
 export const updateStatus = async (req: AuthRequest, res: Response) => {
   try {
     res.json(
-      await Service.updateStatus(Number(req.params.id), req.body.status),
+      await Service.updateStatus(Number(req.params.id), req.body.status, req.body.rejectionReason),
     );
   } catch (error: any) {
     res.status(400).json({ message: error.message });

@@ -3,7 +3,108 @@ import { getPaginationParams, paginate } from "../../utils/pagination.js";
 
 export const getAll = async (query: any) => {
   const params = getPaginationParams(query);
+  const { search, startDate, endDate, status, sortBy, sortOrder } = query;
+
+  const where: any = {};
+
+  if (search) {
+    const searchTerms = search.trim().split(/\s+/);
+    where.AND = searchTerms.map((term: string) => {
+      const upperTerm = term.toUpperCase();
+      const orConditions: any[] = [
+        { title: { contains: term } },
+        { description: { contains: term } },
+        { device: { name: { contains: term } } },
+        { device: { customer: { fullName: { contains: term } } } },
+      ];
+      
+      if (upperTerm.startsWith('TK') && !isNaN(Number(upperTerm.slice(2)))) {
+        orConditions.push({ id: Number(upperTerm.slice(2)) });
+      } else if (upperTerm.startsWith('TB') && !isNaN(Number(upperTerm.slice(2)))) {
+        orConditions.push({ deviceId: Number(upperTerm.slice(2)) });
+      } else if (upperTerm.startsWith('KH') && !isNaN(Number(upperTerm.slice(2)))) {
+        orConditions.push({ device: { customerId: Number(upperTerm.slice(2)) } });
+      } else if (!isNaN(Number(term))) {
+        orConditions.push({ id: Number(term) });
+      }
+      return { OR: orConditions };
+    });
+  }
+
+  if (startDate || endDate) {
+    where.createdAt = {};
+    if (startDate) where.createdAt.gte = new Date(startDate);
+    if (endDate) {
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      where.createdAt.lte = end;
+    }
+  }
+
+  if (status) {
+    where.status = status;
+  }
+
+  if (sortBy === "priority") {
+    // Custom sort for priority: high -> medium -> low
+    const priorityWeight: Record<string, number> = {
+      high: 3,
+      medium: 2,
+      low: 1
+    };
+
+    // Fetch all matching records' IDs and priorities
+    const allMatching = await prisma.ticket.findMany({
+      where,
+      select: { id: true, priority: true }
+    });
+
+    allMatching.sort((a, b) => {
+      const weightA = priorityWeight[a.priority] || 0;
+      const weightB = priorityWeight[b.priority] || 0;
+      if (weightA === weightB) return sortOrder === "asc" ? a.id - b.id : b.id - a.id;
+      return sortOrder === "asc" ? weightA - weightB : weightB - weightA;
+    });
+
+    const total = allMatching.length;
+    const skip = (params.page - 1) * params.pageSize;
+    const paginatedIds = allMatching.slice(skip, skip + params.pageSize).map(t => t.id);
+
+    const data = await prisma.ticket.findMany({
+      where: { id: { in: paginatedIds } },
+      include: {
+        device: {
+          select: {
+            id: true,
+            name: true,
+            serialNumber: true,
+            customer: { select: { id: true, fullName: true, additionalInfo: true } },
+          },
+        },
+      },
+    });
+
+    // findMany with 'in' doesn't guarantee order, so we sort it again
+    data.sort((a, b) => paginatedIds.indexOf(a.id) - paginatedIds.indexOf(b.id));
+
+    return {
+      data,
+      total,
+      page: params.page,
+      pageSize: params.pageSize,
+      totalPages: Math.ceil(total / params.pageSize)
+    };
+  }
+
+  const orderBy: any = {};
+  if (sortBy === "createdAt" || sortBy === "id" || sortBy === "status") {
+    orderBy[sortBy] = sortOrder || "desc";
+  } else {
+    orderBy.createdAt = "desc";
+  }
+
   return paginate(prisma.ticket, params, {
+    where,
     include: {
       device: {
         select: {
@@ -14,7 +115,7 @@ export const getAll = async (query: any) => {
         },
       },
     },
-    orderBy: { createdAt: "desc" },
+    orderBy,
   });
 };
 
@@ -91,12 +192,15 @@ export const create = async (
   });
 };
 
-export const updateStatus = async (id: number, status: string) => {
+export const updateStatus = async (id: number, status: string, rejectionReason?: string) => {
   const ticket = await prisma.ticket.findUnique({ where: { id } });
   if (!ticket) throw new Error("Ticket không tồn tại");
   return prisma.ticket.update({
     where: { id },
-    data: { status },
+    data: { 
+      status,
+      ...(status === 'rejected' && rejectionReason ? { rejectionReason } : {})
+    },
   });
 };
 

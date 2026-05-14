@@ -12,6 +12,7 @@ import DeviceCategoryListPage from "@/pages/device-categories/DeviceCategoryList
 import DeviceListPage from "@/pages/devices/DeviceListPage";
 import WarrantyContractListPage from "@/pages/warranty-contracts/WarrantyContractListPage";
 import AdminTicketListPage from "@/pages/tickets/AdminTicketListPage";
+import AdminTicketDetailPage from "@/pages/tickets/AdminTicketDetailPage";
 import CustomerTicketListPage from "@/pages/tickets/CustomerTicketListPage";
 import WorkOrderListPage from "@/pages/work-orders/WorkOrderListPage";
 import MaintenanceScheduleListPage from "@/pages/maintenance-schedules/MaintenanceScheduleListPage";
@@ -60,6 +61,7 @@ const router = createBrowserRouter([
       { path: "devices", element: <DeviceListPage /> },
       { path: "warranty-contracts", element: <WarrantyContractListPage /> },
       { path: "tickets", element: <AdminTicketListPage /> },
+      { path: "tickets/:id", element: <AdminTicketDetailPage /> },
       { path: "work-orders", element: <WorkOrderListPage /> },
       { path: "maintenance-schedules", element: <MaintenanceScheduleListPage /> },
       { path: "parts", element: <PartListPage /> },
