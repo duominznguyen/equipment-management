@@ -42,11 +42,21 @@ export const getAll = async (query: any) => {
     }
   }
 
-  if (skillId && skillId !== "all") {
+  if (query.skillIds && query.skillIds !== "all") {
+    const ids = query.skillIds.split(",").map(Number).filter((id: number) => !isNaN(id));
+    if (ids.length > 0) {
+      where.technicianSkills = {
+        some: {
+          deviceCategoryId: { in: ids },
+        },
+      };
+    }
+  } else if (skillId && skillId !== "all") {
+    // Keep backward compatibility if needed
     where.technicianSkills = {
       some: {
-        deviceCategoryId: Number(skillId)
-      }
+        deviceCategoryId: Number(skillId),
+      },
     };
   }
 

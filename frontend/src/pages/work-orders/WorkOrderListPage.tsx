@@ -6,16 +6,22 @@ import { DataTable } from "@/components/DataTable";
 import { usePagination } from "@/hooks/usePagination";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { PlusCircle, Pencil, RefreshCw } from "lucide-react";
+import { PlusCircle, Pencil, Trash2 } from "lucide-react";
 import type { WorkOrder } from "@/types/work-order.type";
 import { formatDateTime } from "@/utils/date";
 import CreateWorkOrderModal from "./CreateWorkOrderModal";
+import { deleteWorkOrder } from "@/services/work-order.service";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const statusLabels: Record<string, string> = {
   pending: "Chờ xử lý",
@@ -42,8 +48,8 @@ const WorkOrderListPage = () => {
     queryFn: () => getWorkOrders(page, pageSize),
   });
 
-  const statusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: number; status: string }) => updateWorkOrderStatus(id, status),
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => deleteWorkOrder(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["work-orders"] }),
   });
 
@@ -60,23 +66,44 @@ const WorkOrderListPage = () => {
   const columns = [
     {
       key: "id",
-      title: "Mã",
-      render: (val: number) => `#${val}`,
+      title: "Mã WO",
+      render: (val: number) => `WO${String(val).padStart(4, "0")}`,
     },
     {
       key: "technician",
       title: "Kỹ thuật viên",
-      render: (_: any, record: WorkOrder) => record.technician?.fullName || "—",
+      render: (_: any, record: WorkOrder) => 
+        record.technician ? `KTV${String(record.technician.id).padStart(4, "0")} - ${record.technician.fullName}` : "—",
     },
     {
-      key: "ticket",
-      title: "Ticket",
-      render: (_: any, record: WorkOrder) => (record.ticket ? `#${record.ticket.id} - ${record.ticket.title}` : "—"),
+      key: "source",
+      title: "Nguồn việc",
+      render: (_: any, record: WorkOrder) => {
+        if (record.ticketId) return "Ticket sự cố";
+        if (record.maintenanceScheduleId) return "Bảo trì định kỳ";
+        return "Tạo thủ công";
+      },
     },
     {
-      key: "schedule",
-      title: "Lịch bảo trì",
-      render: (_: any, record: WorkOrder) => (record.maintenanceSchedule ? `#${record.maintenanceSchedule.id} (${record.maintenanceSchedule.device?.name})` : "—"),
+      key: "sourceCode",
+      title: "Mã nguồn",
+      render: (_: any, record: WorkOrder) => {
+        if (record.ticketId) return `TK${String(record.ticketId).padStart(4, "0")}`;
+        if (record.maintenanceScheduleId) return `WC${String(record.maintenanceScheduleId).padStart(4, "0")}`;
+        return "—";
+      },
+    },
+    {
+      key: "workDescription",
+      title: "Mô tả công việc",
+      render: (val: string) =>
+        val ? (
+          <div className="max-w-[200px] truncate" title={val}>
+            {val}
+          </div>
+        ) : (
+          "—"
+        ),
     },
     {
       key: "status",
@@ -94,28 +121,47 @@ const WorkOrderListPage = () => {
       render: (_: any, record: WorkOrder) => (
         <div className="flex gap-2">
           {isAdmin && (
-            <Button size="sm" variant="outline" onClick={() => handleEdit(record)}>
+            <Button 
+              size="sm" 
+              variant="outline" 
+              onClick={() => handleEdit(record)}
+              disabled={record.status !== "pending"}
+              title={record.status !== "pending" ? "Chỉ được sửa khi đang chờ xử lý" : "Sửa"}
+            >
               <Pencil className="h-3 w-3" />
             </Button>
           )}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button size="sm" variant="outline">
-                <RefreshCw className="h-3 w-3" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              {Object.entries(statusLabels).map(([value, label]) => (
-                <DropdownMenuItem
-                  key={value}
-                  onClick={() => statusMutation.mutate({ id: record.id, status: value })}
-                  disabled={record.status === value}
+          {isAdmin && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button 
+                  size="sm" 
+                  variant="destructive"
+                  disabled={record.status !== "pending"}
+                  title={record.status !== "pending" ? "Chỉ được xoá khi đang chờ xử lý" : "Xóa"}
                 >
-                  {label}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Xác nhận xoá Work Order</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Bạn có chắc chắn muốn xoá Work Order này không? Thao tác này sẽ xoá Work Order và khôi phục trạng thái cho nguồn việc liên quan.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Hủy</AlertDialogCancel>
+                  <AlertDialogAction 
+                    onClick={() => deleteMutation.mutate(record.id)}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Xoá
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
         </div>
       ),
     },

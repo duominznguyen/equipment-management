@@ -195,6 +195,7 @@ const MaintenanceScheduleListPage = () => {
                         setWorkOrderData({
                           maintenanceScheduleId: record.id,
                           referenceInfo: `Bảo trì định kỳ thiết bị: ${record.device.name}`,
+                          deviceCategoryId: record.device?.categoryId,
                         });
                         setIsWorkOrderModalOpen(true);
                       }}
@@ -298,6 +299,7 @@ const MaintenanceScheduleListPage = () => {
                 <SelectItem value="unhandled">Chưa xử lý (Đến hạn, sắp tới)</SelectItem>
                 <SelectItem value="due">Đến hạn</SelectItem>
                 <SelectItem value="upcoming">Sắp tới</SelectItem>
+                <SelectItem value="not_due">Chưa đến hạn</SelectItem>
                 <SelectItem value="handled">Đã xử lý</SelectItem>
               </SelectContent>
             </Select>

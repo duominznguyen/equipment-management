@@ -18,16 +18,43 @@ export const getAll = async (query: any) => {
 
   if (status === "handled") {
     where.isHandled = true;
-  } else if (status === "unhandled") {
-    where.isHandled = false;
   } else if (status === "due") {
     where.isHandled = false;
     where.isContinueMaintain = true;
     where.nextMaintenanceDate = { lte: new Date(new Date().setHours(0, 0, 0, 0)) };
-  } else if (status === "upcoming") {
-    where.isHandled = false;
-    where.isContinueMaintain = true;
-    where.nextMaintenanceDate = { gt: new Date(new Date().setHours(0, 0, 0, 0)) };
+  } else if (status === "unhandled" || status === "upcoming" || status === "not_due") {
+    const allUnhandled = await prisma.maintenanceSchedule.findMany({
+      where: {
+        isHandled: false,
+        isContinueMaintain: true,
+        ...(where.device ? { device: where.device } : {}),
+      },
+      select: { id: true, nextMaintenanceDate: true, leadTimeDays: true },
+    });
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const matchingIds = allUnhandled
+      .filter((schedule) => {
+        if (!schedule.nextMaintenanceDate) return false;
+        const nextDate = new Date(schedule.nextMaintenanceDate);
+        nextDate.setHours(0, 0, 0, 0);
+        const leadTimeDate = new Date(nextDate);
+        leadTimeDate.setDate(leadTimeDate.getDate() - schedule.leadTimeDays);
+
+        if (status === "unhandled") {
+          return today >= leadTimeDate; // Đến hạn + Sắp tới
+        } else if (status === "upcoming") {
+          return today >= leadTimeDate && today < nextDate; // Chỉ Sắp tới
+        } else if (status === "not_due") {
+          return today < leadTimeDate; // Chưa đến hạn
+        }
+        return false;
+      })
+      .map((s) => s.id);
+
+    where.id = { in: matchingIds };
   }
 
   const orderBy = { [sortBy]: order };
@@ -35,7 +62,7 @@ export const getAll = async (query: any) => {
   return paginate(prisma.maintenanceSchedule, params, {
     where,
     include: {
-      device: { select: { id: true, name: true, serialNumber: true } },
+      device: { select: { id: true, name: true, serialNumber: true, categoryId: true } },
       _count: { select: { workOrders: true } },
     },
     orderBy,
@@ -80,16 +107,44 @@ export const getMySchedules = async (userId: number, query: any) => {
 
   if (status === "handled") {
     where.isHandled = true;
-  } else if (status === "unhandled") {
-    where.isHandled = false;
   } else if (status === "due") {
     where.isHandled = false;
     where.isContinueMaintain = true;
     where.nextMaintenanceDate = { lte: new Date(new Date().setHours(0, 0, 0, 0)) };
-  } else if (status === "upcoming") {
-    where.isHandled = false;
-    where.isContinueMaintain = true;
-    where.nextMaintenanceDate = { gt: new Date(new Date().setHours(0, 0, 0, 0)) };
+  } else if (status === "unhandled" || status === "upcoming" || status === "not_due") {
+    const allUnhandled = await prisma.maintenanceSchedule.findMany({
+      where: {
+        deviceId: { in: deviceIds },
+        isHandled: false,
+        isContinueMaintain: true,
+        ...(where.device ? { device: where.device } : {}),
+      },
+      select: { id: true, nextMaintenanceDate: true, leadTimeDays: true },
+    });
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const matchingIds = allUnhandled
+      .filter((schedule) => {
+        if (!schedule.nextMaintenanceDate) return false;
+        const nextDate = new Date(schedule.nextMaintenanceDate);
+        nextDate.setHours(0, 0, 0, 0);
+        const leadTimeDate = new Date(nextDate);
+        leadTimeDate.setDate(leadTimeDate.getDate() - schedule.leadTimeDays);
+
+        if (status === "unhandled") {
+          return today >= leadTimeDate; // Đến hạn + Sắp tới
+        } else if (status === "upcoming") {
+          return today >= leadTimeDate && today < nextDate; // Chỉ Sắp tới
+        } else if (status === "not_due") {
+          return today < leadTimeDate; // Chưa đến hạn
+        }
+        return false;
+      })
+      .map((s) => s.id);
+
+    where.id = { in: matchingIds };
   }
 
   const orderBy = { [sortBy]: order };
@@ -97,7 +152,7 @@ export const getMySchedules = async (userId: number, query: any) => {
   return paginate(prisma.maintenanceSchedule, params, {
     where,
     include: {
-      device: { select: { id: true, name: true, serialNumber: true } },
+      device: { select: { id: true, name: true, serialNumber: true, categoryId: true } },
       _count: { select: { workOrders: true } },
     },
     orderBy,

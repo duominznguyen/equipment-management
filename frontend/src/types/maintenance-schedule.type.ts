@@ -11,6 +11,7 @@ export interface MaintenanceSchedule {
     id: number;
     name: string;
     serialNumber: string;
+    categoryId?: number;
     customer?: {
       id: number;
       fullName: string;

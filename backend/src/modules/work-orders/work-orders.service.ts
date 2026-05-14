@@ -41,16 +41,23 @@ export const create = async (data: {
   technicianId: number;
   workDescription?: string;
 }) => {
-  if (!data.ticketId && !data.maintenanceScheduleId) {
-    throw new Error("Work Order phải thuộc về một Ticket hoặc Lịch bảo trì");
-  }
+  // Cho phép tạo Work Order thủ công không cần ticket hoặc lịch bảo trì
 
-  return prisma.workOrder.create({
+  const wo = await prisma.workOrder.create({
     data: { ...data, status: "pending" },
     include: {
       technician: { select: { id: true, fullName: true } },
     },
   });
+
+  if (data.ticketId) {
+    await prisma.ticket.update({
+      where: { id: data.ticketId },
+      data: { status: "processing" },
+    });
+  }
+
+  return wo;
 };
 
 export const createFromTicket = async (
@@ -92,6 +99,11 @@ export const update = async (
 ) => {
   const request = await prisma.workOrder.findUnique({ where: { id } });
   if (!request) throw new Error("Work Order không tồn tại");
+
+  if (request.status !== "pending") {
+    throw new Error("Chỉ có thể chỉnh sửa Work Order ở trạng thái chờ xử lý");
+  }
+
   return prisma.workOrder.update({
     where: { id },
     data,
@@ -164,8 +176,20 @@ export const remove = async (id: number) => {
   const request = await prisma.workOrder.findUnique({ where: { id }, include: { partUsages: true } });
   if (!request) throw new Error("Work Order không tồn tại");
 
+  if (request.status !== "pending") {
+    throw new Error("Chỉ có thể xoá Work Order ở trạng thái chờ xử lý");
+  }
+
   if (request.partUsages.length > 0) {
     throw new Error("Không thể xoá Work Order đã có sử dụng linh kiện, vui lòng xóa linh kiện trước");
+  }
+
+  // Rollback trạng thái Ticket về pending nếu WO này gắn với Ticket
+  if (request.ticketId) {
+    await prisma.ticket.update({
+      where: { id: request.ticketId },
+      data: { status: "pending" },
+    });
   }
 
   return prisma.workOrder.delete({ where: { id } });

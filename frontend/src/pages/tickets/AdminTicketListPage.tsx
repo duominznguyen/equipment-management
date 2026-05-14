@@ -171,6 +171,7 @@ const AdminTicketListPage = () => {
                     setWorkOrderData({
                       ticketId: record.id,
                       referenceInfo: `Xử lý sự cố: ${record.title}`,
+                      deviceCategoryId: record.device?.categoryId,
                     });
                     setIsWorkOrderModalOpen(true);
                   }}
