@@ -3,11 +3,42 @@ import { getPaginationParams, paginate } from "../../utils/pagination.js";
 
 export const getAll = async (query: any) => {
   const params = getPaginationParams(query);
+  const { search, status, sortBy = "nextMaintenanceDate", order = "asc" } = query;
+
+  const where: any = {};
+
+  if (search) {
+    where.device = {
+      OR: [
+        { name: { contains: search } },
+        { serialNumber: { contains: search } },
+      ],
+    };
+  }
+
+  if (status === "handled") {
+    where.isHandled = true;
+  } else if (status === "unhandled") {
+    where.isHandled = false;
+  } else if (status === "due") {
+    where.isHandled = false;
+    where.isContinueMaintain = true;
+    where.nextMaintenanceDate = { lte: new Date(new Date().setHours(0, 0, 0, 0)) };
+  } else if (status === "upcoming") {
+    where.isHandled = false;
+    where.isContinueMaintain = true;
+    where.nextMaintenanceDate = { gt: new Date(new Date().setHours(0, 0, 0, 0)) };
+  }
+
+  const orderBy = { [sortBy]: order };
+
   return paginate(prisma.maintenanceSchedule, params, {
+    where,
     include: {
       device: { select: { id: true, name: true, serialNumber: true } },
+      _count: { select: { workOrders: true } },
     },
-    orderBy: { nextMaintenanceDate: "asc" },
+    orderBy,
   });
 };
 
@@ -34,28 +65,65 @@ export const getMySchedules = async (userId: number, query: any) => {
   ).map((d) => d.id);
 
   const params = getPaginationParams(query);
+  const { search, status, sortBy = "nextMaintenanceDate", order = "asc" } = query;
+
+  const where: any = { deviceId: { in: deviceIds } };
+
+  if (search) {
+    where.device = {
+      OR: [
+        { name: { contains: search } },
+        { serialNumber: { contains: search } },
+      ],
+    };
+  }
+
+  if (status === "handled") {
+    where.isHandled = true;
+  } else if (status === "unhandled") {
+    where.isHandled = false;
+  } else if (status === "due") {
+    where.isHandled = false;
+    where.isContinueMaintain = true;
+    where.nextMaintenanceDate = { lte: new Date(new Date().setHours(0, 0, 0, 0)) };
+  } else if (status === "upcoming") {
+    where.isHandled = false;
+    where.isContinueMaintain = true;
+    where.nextMaintenanceDate = { gt: new Date(new Date().setHours(0, 0, 0, 0)) };
+  }
+
+  const orderBy = { [sortBy]: order };
+
   return paginate(prisma.maintenanceSchedule, params, {
-    where: { deviceId: { in: deviceIds } },
+    where,
     include: {
       device: { select: { id: true, name: true, serialNumber: true } },
+      _count: { select: { workOrders: true } },
     },
-    orderBy: { nextMaintenanceDate: "asc" },
+    orderBy,
   });
 };
 
 export const create = async (data: {
   deviceId: number;
   lastMaintenanceDate?: string;
-  nextMaintenanceDate?: string;
+  maintenanceIntervalDays?: number;
   leadTimeDays?: number;
   isHandled?: boolean;
   isContinueMaintain?: boolean;
 }) => {
+  const lastDate = data.lastMaintenanceDate ? new Date(data.lastMaintenanceDate) : new Date();
+  const interval = data.maintenanceIntervalDays ?? 30;
+
+  const nextDate = new Date(lastDate);
+  nextDate.setDate(nextDate.getDate() + interval);
+
   return prisma.maintenanceSchedule.create({
     data: {
       deviceId: data.deviceId,
-      lastMaintenanceDate: data.lastMaintenanceDate ? new Date(data.lastMaintenanceDate) : undefined,
-      nextMaintenanceDate: data.nextMaintenanceDate ? new Date(data.nextMaintenanceDate) : undefined,
+      lastMaintenanceDate: lastDate,
+      nextMaintenanceDate: nextDate,
+      maintenanceIntervalDays: interval,
       leadTimeDays: data.leadTimeDays,
       isHandled: data.isHandled,
       isContinueMaintain: data.isContinueMaintain,
@@ -70,7 +138,7 @@ export const update = async (
   id: number,
   data: {
     lastMaintenanceDate?: string;
-    nextMaintenanceDate?: string;
+    maintenanceIntervalDays?: number;
     leadTimeDays?: number;
     isHandled?: boolean;
     isContinueMaintain?: boolean;
@@ -78,11 +146,19 @@ export const update = async (
 ) => {
   const schedule = await prisma.maintenanceSchedule.findUnique({ where: { id } });
   if (!schedule) throw new Error("Lịch bảo trì không tồn tại");
+
+  const lastDate = data.lastMaintenanceDate ? new Date(data.lastMaintenanceDate) : schedule.lastMaintenanceDate;
+  const interval = data.maintenanceIntervalDays ?? schedule.maintenanceIntervalDays;
+
+  const nextDate = new Date(lastDate);
+  nextDate.setDate(nextDate.getDate() + interval);
+
   return prisma.maintenanceSchedule.update({
     where: { id },
     data: {
-      lastMaintenanceDate: data.lastMaintenanceDate ? new Date(data.lastMaintenanceDate) : undefined,
-      nextMaintenanceDate: data.nextMaintenanceDate ? new Date(data.nextMaintenanceDate) : undefined,
+      lastMaintenanceDate: lastDate,
+      nextMaintenanceDate: nextDate,
+      maintenanceIntervalDays: interval,
       leadTimeDays: data.leadTimeDays,
       isHandled: data.isHandled,
       isContinueMaintain: data.isContinueMaintain,

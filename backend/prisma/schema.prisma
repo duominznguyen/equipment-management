@@ -131,13 +131,14 @@ model Ticket {
 }
 
 model MaintenanceSchedule {
-  id                  Int       @id @default(autoincrement())
-  deviceId            Int
-  lastMaintenanceDate DateTime  @default(now())
-  nextMaintenanceDate DateTime?
-  leadTimeDays        Int       @default(7)
-  isHandled           Boolean   @default(false)
-  isContinueMaintain  Boolean   @default(true)
+  id                    Int       @id @default(autoincrement())
+  deviceId              Int
+  lastMaintenanceDate   DateTime  @default(now())
+  nextMaintenanceDate   DateTime?
+  maintenanceIntervalDays Int     @default(30)
+  leadTimeDays          Int       @default(7)
+  isHandled             Boolean   @default(false)
+  isContinueMaintain    Boolean   @default(true)
 
   device     Device      @relation(fields: [deviceId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   workOrders WorkOrder[]
