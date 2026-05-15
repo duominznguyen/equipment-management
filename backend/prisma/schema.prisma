@@ -150,6 +150,7 @@ model WorkOrder {
   maintenanceScheduleId Int?
   technicianId          Int
   workDescription       String?   @db.NVarChar(1000)
+  reportContent         String?   @db.NVarChar(2000)
   status                String    @default("pending") @db.VarChar(20)
   createdAt             DateTime  @default(now())
   startedAt             DateTime?

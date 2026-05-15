@@ -45,6 +45,11 @@ export const updateWorkOrderStatus = async (id: number, status: string) => {
   return res.data;
 };
 
+export const completeWorkOrder = async (id: number, data: { reportContent: string; parts: { partId: number; quantityUsage: number }[] }) => {
+  const res = await api.post(`/work-orders/${id}/complete`, data);
+  return res.data;
+};
+
 export const deleteWorkOrder = async (id: number) => {
   const res = await api.delete(`/work-orders/${id}`);
   return res.data;

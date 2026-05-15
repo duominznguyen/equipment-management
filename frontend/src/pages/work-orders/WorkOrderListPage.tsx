@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import type { WorkOrder } from "@/types/work-order.type";
 import { formatDateTime } from "@/utils/date";
 import CreateWorkOrderModal from "./CreateWorkOrderModal";
+import CompleteWorkOrderModal from "./CompleteWorkOrderModal";
 
 import {
   AlertDialog,
@@ -61,6 +62,7 @@ const WorkOrderListPage = ({
     title: string;
     description: string;
   } | null>(null);
+  const [completingWorkOrderId, setCompletingWorkOrderId] = useState<number | null>(null);
   const { page, pageSize, setPage, setPageSize } = usePagination();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -197,12 +199,7 @@ const WorkOrderListPage = ({
               </DropdownMenuTrigger>
               <DropdownMenuContent>
                 <DropdownMenuItem
-                  onClick={() => setConfirmAction({
-                    id: record.id,
-                    status: "completed",
-                    title: "Xác nhận hoàn thành",
-                    description: "Bạn có chắc chắn muốn hoàn thành Work Order này không? Trạng thái sẽ được chuyển sang 'Hoàn thành' và không thể thay đổi."
-                  })}
+                  onClick={() => setCompletingWorkOrderId(record.id)}
                 >
                   <Check className="mr-2 h-4 w-4" />
                   Xác nhận hoàn thành
@@ -346,6 +343,7 @@ const WorkOrderListPage = ({
       />
 
       <CreateWorkOrderModal open={isModalOpen} onClose={handleClose} workOrder={selectedWorkOrder} />
+      <CompleteWorkOrderModal open={completingWorkOrderId !== null} onClose={() => setCompletingWorkOrderId(null)} workOrderId={completingWorkOrderId} />
 
       <AlertDialog open={!!confirmAction} onOpenChange={(open) => !open && setConfirmAction(null)}>
         <AlertDialogContent>

@@ -202,6 +202,74 @@ export const updateStatus = async (id: number, status: string) => {
   return prisma.workOrder.update({ where: { id }, data });
 };
 
+export const completeWorkOrder = async (
+  id: number,
+  data: {
+    reportContent: string;
+    parts: { partId: number; quantityUsage: number }[];
+  }
+) => {
+  const request = await prisma.workOrder.findUnique({
+    where: { id },
+    include: { ticket: true, maintenanceSchedule: true },
+  });
+  if (!request) throw new Error("Work Order không tồn tại");
+  if (request.status === "completed") throw new Error("Work Order đã hoàn thành trước đó");
+
+  return prisma.$transaction(async (tx) => {
+    // 1. Update Work Order
+    const updatedWO = await tx.workOrder.update({
+      where: { id },
+      data: {
+        status: "completed",
+        completedAt: new Date(),
+        reportContent: data.reportContent,
+      },
+    });
+
+    // 2. Add Part Usages (if any)
+    if (data.parts && data.parts.length > 0) {
+      await tx.partUsage.createMany({
+        data: data.parts.map((p) => ({
+          workOrderId: id,
+          partId: p.partId,
+          quantityUsage: p.quantityUsage,
+        })),
+      });
+    }
+
+    // 3. Update related Ticket
+    if (request.ticketId) {
+      await tx.ticket.update({
+        where: { id: request.ticketId },
+        data: { status: "resolved" },
+      });
+      if (request.ticket) {
+        await tx.device.update({
+          where: { id: request.ticket.deviceId },
+          data: { status: "active" },
+        });
+      }
+    }
+
+    // 4. Update related Maintenance Schedule
+    if (request.maintenanceScheduleId) {
+      await tx.maintenanceSchedule.update({
+        where: { id: request.maintenanceScheduleId },
+        data: { isHandled: true },
+      });
+      if (request.maintenanceSchedule) {
+        await tx.device.update({
+          where: { id: request.maintenanceSchedule.deviceId },
+          data: { status: "active" },
+        });
+      }
+    }
+
+    return updatedWO;
+  });
+};
+
 export const addPartUsage = async (workOrderId: number, partId: number, quantityUsage: number) => {
   const workOrder = await prisma.workOrder.findUnique({ where: { id: workOrderId } });
   if (!workOrder) throw new Error("Work Order không tồn tại");

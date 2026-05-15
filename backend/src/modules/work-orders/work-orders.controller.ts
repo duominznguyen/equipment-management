@@ -55,6 +55,14 @@ export const updateStatus = async (req: AuthRequest, res: Response) => {
   }
 };
 
+export const completeWorkOrder = async (req: AuthRequest, res: Response) => {
+  try {
+    res.json(await Service.completeWorkOrder(Number(req.params.id), req.body));
+  } catch (error: any) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
 export const addPartUsage = async (req: AuthRequest, res: Response) => {
   try {
     res.status(201).json(await Service.addPartUsage(Number(req.params.id), Number(req.body.partId), Number(req.body.quantityUsage)));

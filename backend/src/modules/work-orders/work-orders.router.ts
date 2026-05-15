@@ -15,6 +15,7 @@ router.post("/from-ticket", roleMiddleware("admin"), Controller.createFromTicket
 
 router.patch("/:id", roleMiddleware("admin"), Controller.update);
 router.patch("/:id/status", roleMiddleware("admin", "technician"), Controller.updateStatus);
+router.post("/:id/complete", roleMiddleware("admin", "technician"), Controller.completeWorkOrder);
 
 router.post("/:id/parts", roleMiddleware("admin", "technician"), Controller.addPartUsage);
 router.delete("/parts/:usageId", roleMiddleware("admin", "technician"), Controller.removePartUsage);
