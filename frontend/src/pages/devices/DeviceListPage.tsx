@@ -25,15 +25,19 @@ import { formatDate } from "@/utils/date";
 import DeviceFormModal from "./DeviceFormModal";
 
 const statusLabels: Record<string, string> = {
-  active: "Đang hoạt động",
-  maintaining: "Đang bảo trì",
-  broken: "Hỏng",
+  active: "Hoạt động",
+  inactive: "Ngừng HĐ",
+  maintaining: "Bảo trì",
+  broken: "Đang lỗi",
+  error: "Đang lỗi",
 };
 
-const statusVariants: Record<string, "default" | "secondary" | "destructive"> = {
+const statusVariants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
   active: "default",
+  inactive: "outline",
   maintaining: "secondary",
   broken: "destructive",
+  error: "destructive",
 };
 
 const DeviceListPage = () => {
@@ -63,15 +67,16 @@ const DeviceListPage = () => {
 
   const { data, isLoading } = useQuery({
     queryKey: ["devices", page, pageSize, debouncedSearch, sortBy, sortOrder, status, categoryId, startDate, endDate],
-    queryFn: () => getDevices(page, pageSize, {
-      search: debouncedSearch || undefined,
-      sortBy,
-      sortOrder,
-      status: status === "all" ? undefined : status,
-      categoryId: categoryId === "all" ? undefined : categoryId,
-      startDate: startDate || undefined,
-      endDate: endDate || undefined,
-    }),
+    queryFn: () =>
+      getDevices(page, pageSize, {
+        search: debouncedSearch || undefined,
+        sortBy,
+        sortOrder,
+        status: status === "all" ? undefined : status,
+        categoryId: categoryId === "all" ? undefined : categoryId,
+        startDate: startDate || undefined,
+        endDate: endDate || undefined,
+      }),
   });
 
   const deleteMutation = useMutation({
@@ -112,7 +117,7 @@ const DeviceListPage = () => {
     {
       key: "status",
       title: "Trạng thái",
-      render: (val: string) => <Badge variant={statusVariants[val]}>{statusLabels[val]}</Badge>,
+      render: (val: string) => <Badge className="whitespace-nowrap" variant={statusVariants[val] || "outline"}>{statusLabels[val] || val}</Badge>,
     },
     {
       key: "purchaseDate",
@@ -186,9 +191,10 @@ const DeviceListPage = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                  <SelectItem value="active">Đang hoạt động</SelectItem>
-                  <SelectItem value="maintaining">Đang bảo trì</SelectItem>
-                  <SelectItem value="broken">Hỏng</SelectItem>
+                  <SelectItem value="active">Hoạt động</SelectItem>
+                  <SelectItem value="inactive">Ngừng hoạt động</SelectItem>
+                  <SelectItem value="maintaining">Bảo trì</SelectItem>
+                  <SelectItem value="broken">Đang lỗi</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -222,8 +228,8 @@ const DeviceListPage = () => {
                     <SelectItem value="brand">Hãng sản xuất</SelectItem>
                   </SelectContent>
                 </Select>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
                   className="px-3 bg-background"
                   title={sortOrder === "asc" ? "Tăng dần" : "Giảm dần"}
@@ -234,19 +240,19 @@ const DeviceListPage = () => {
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">Mua từ ngày</label>
-              <Input 
-                type="date" 
-                value={startDate} 
-                onChange={(e) => setStartDate(e.target.value)} 
+              <Input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
                 className="bg-background"
               />
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">Đến ngày</label>
-              <Input 
-                type="date" 
-                value={endDate} 
-                onChange={(e) => setEndDate(e.target.value)} 
+              <Input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
                 className="bg-background"
               />
             </div>

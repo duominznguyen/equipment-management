@@ -180,29 +180,54 @@ export const create = async (
   if (device.customerId !== customer.id)
     throw new Error("Thiết bị không thuộc về bạn");
 
-  return prisma.ticket.create({
-    data: {
-      deviceId: data.deviceId,
-      title: data.title,
-      description: data.description,
-      priority: data.priority || "medium",
-      status: "pending",
-    },
-    include: {
-      device: { select: { id: true, name: true, serialNumber: true } },
-    },
+  return prisma.$transaction(async (tx) => {
+    const ticket = await tx.ticket.create({
+      data: {
+        deviceId: data.deviceId,
+        title: data.title,
+        description: data.description,
+        priority: data.priority || "medium",
+        status: "pending",
+      },
+      include: {
+        device: { select: { id: true, name: true, serialNumber: true } },
+      },
+    });
+
+    await tx.device.update({
+      where: { id: data.deviceId },
+      data: { status: "error" },
+    });
+
+    return ticket;
   });
 };
 
 export const updateStatus = async (id: number, status: string, rejectionReason?: string) => {
   const ticket = await prisma.ticket.findUnique({ where: { id } });
   if (!ticket) throw new Error("Ticket không tồn tại");
-  return prisma.ticket.update({
-    where: { id },
-    data: { 
-      status,
-      ...(status === 'rejected' && rejectionReason ? { rejectionReason } : {})
-    },
+  return prisma.$transaction(async (tx) => {
+    const updatedTicket = await tx.ticket.update({
+      where: { id },
+      data: { 
+        status,
+        ...(status === 'rejected' && rejectionReason ? { rejectionReason } : {})
+      },
+    });
+
+    if (status === 'processing') {
+      await tx.device.update({
+        where: { id: ticket.deviceId },
+        data: { status: 'maintenance' },
+      });
+    } else if (status === 'resolved' || status === 'rejected' || status === 'cancelled') {
+      await tx.device.update({
+        where: { id: ticket.deviceId },
+        data: { status: 'active' },
+      });
+    }
+
+    return updatedTicket;
   });
 };
 

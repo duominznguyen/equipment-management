@@ -85,23 +85,27 @@ export const create = async (data: {
   technicianId: number;
   workDescription?: string;
 }) => {
-  // Cho phép tạo Work Order thủ công không cần ticket hoặc lịch bảo trì
-
-  const wo = await prisma.workOrder.create({
-    data: { ...data, status: "pending" },
-    include: {
-      technician: { select: { id: true, fullName: true } },
-    },
-  });
-
-  if (data.ticketId) {
-    await prisma.ticket.update({
-      where: { id: data.ticketId },
-      data: { status: "processing" },
+  return prisma.$transaction(async (tx) => {
+    const wo = await tx.workOrder.create({
+      data: { ...data, status: "pending" },
+      include: {
+        technician: { select: { id: true, fullName: true } },
+      },
     });
-  }
 
-  return wo;
+    if (data.ticketId) {
+      const ticket = await tx.ticket.update({
+        where: { id: data.ticketId },
+        data: { status: "processing" },
+      });
+      await tx.device.update({
+        where: { id: ticket.deviceId },
+        data: { status: "maintenance" },
+      });
+    }
+
+    return wo;
+  });
 };
 
 export const createFromTicket = async (
@@ -114,24 +118,31 @@ export const createFromTicket = async (
   const ticket = await prisma.ticket.findUnique({ where: { id: ticketId } });
   if (!ticket) throw new Error("Ticket không tồn tại");
 
-  const request = await prisma.workOrder.create({
-    data: {
-      ticketId,
-      technicianId: data.technicianId,
-      workDescription: data.workDescription,
-      status: "pending",
-    },
-    include: {
-      technician: { select: { id: true, fullName: true } },
-    },
-  });
+  return prisma.$transaction(async (tx) => {
+    const request = await tx.workOrder.create({
+      data: {
+        ticketId,
+        technicianId: data.technicianId,
+        workDescription: data.workDescription,
+        status: "pending",
+      },
+      include: {
+        technician: { select: { id: true, fullName: true } },
+      },
+    });
 
-  await prisma.ticket.update({
-    where: { id: ticketId },
-    data: { status: "processing" },
-  });
+    const updatedTicket = await tx.ticket.update({
+      where: { id: ticketId },
+      data: { status: "processing" },
+    });
 
-  return request;
+    await tx.device.update({
+      where: { id: updatedTicket.deviceId },
+      data: { status: "maintenance" },
+    });
+
+    return request;
+  });
 };
 
 export const update = async (
