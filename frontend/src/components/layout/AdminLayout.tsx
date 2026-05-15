@@ -48,14 +48,13 @@ const menuItems: MenuItem[] = [
     children: [
       { key: "customers", label: "Khách hàng", path: "/customers" },
       { key: "technicians", label: "Kỹ thuật viên", path: "/technicians" },
-      { key: "users", label: "Tài khoản", path: "/users" },
     ],
   },
   { key: "devices", label: "Thiết bị", icon: <Laptop size={18} />, path: "/devices" },
   { key: "device-categories", label: "Loại thiết bị", icon: <Package size={18} />, path: "/device-categories" },
   { key: "warranty-contracts", label: "Hợp đồng BH", icon: <ShieldCheck size={18} />, path: "/warranty-contracts" },
   { key: "tickets", label: "Ticket sự cố", icon: <AlertCircle size={18} />, path: "/tickets" },
-  { key: "maintenance-requests", label: "Phiếu bảo trì", icon: <Wrench size={18} />, path: "/maintenance-requests" },
+  { key: "work-orders", label: "Work Orders", icon: <Wrench size={18} />, path: "/work-orders" },
   { key: "maintenance-schedules", label: "Lịch bảo trì", icon: <Calendar size={18} />, path: "/maintenance-schedules" },
   {
     key: "warehouse",
@@ -63,6 +62,7 @@ const menuItems: MenuItem[] = [
     icon: <Package size={18} />,
     children: [
       { key: "parts", label: "Danh mục linh kiện", path: "/parts" },
+      { key: "part-requests", label: "Yêu cầu linh kiện", path: "/part-requests" },
       { key: "part-imports", label: "Nhập kho", path: "/part-imports" },
       { key: "part-exports", label: "Xuất kho", path: "/part-exports" },
     ],

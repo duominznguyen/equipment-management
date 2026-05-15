@@ -5,8 +5,8 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface Column<T> {
   key: string;
-  title: string;
-  render?: (value: any, record: T) => React.ReactNode;
+  title: React.ReactNode;
+  render?: (value: any, record: T, index: number) => React.ReactNode;
 }
 
 interface DataTableProps<T> {
@@ -57,11 +57,11 @@ export function DataTable<T extends { id: number }>({
                 </TableCell>
               </TableRow>
             ) : (
-              data.map((record) => (
+              data.map((record, index) => (
                 <TableRow key={record.id}>
                   {columns.map((col) => (
                     <TableCell key={col.key}>
-                      {col.render ? col.render((record as any)[col.key], record) : ((record as any)[col.key] ?? "—")}
+                      {col.render ? col.render((record as any)[col.key], record, index) : ((record as any)[col.key] ?? "—")}
                     </TableCell>
                   ))}
                 </TableRow>

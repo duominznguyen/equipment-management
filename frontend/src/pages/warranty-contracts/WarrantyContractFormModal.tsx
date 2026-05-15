@@ -21,7 +21,7 @@ const createSchema = z.object({
   customerId: z.string().min(1, "Vui lòng chọn khách hàng"),
   startDate: z.string().min(1, "Vui lòng nhập ngày bắt đầu"),
   endDate: z.string().min(1, "Vui lòng nhập ngày kết thúc"),
-  terms: z.string().optional(),
+  terms: z.string().min(1, "Vui lòng nhập điều khoản hợp đồng"),
 });
 
 const editSchema = z.object({
@@ -114,7 +114,7 @@ const WarrantyContractFormModal = ({ open, onClose, contract }: Props) => {
     >
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Chỉnh sửa hợp đồng" : "Thêm hợp đồng bảo hành"}</DialogTitle>
+          <DialogTitle>{isEdit ? "Gia hạn hợp đồng" : "Thêm hợp đồng bảo hành"}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -182,10 +182,9 @@ const WarrantyContractFormModal = ({ open, onClose, contract }: Props) => {
           </div>
 
           <div className="space-y-2">
-            <Label>
-              Điều khoản <span className="text-muted-foreground">(tuỳ chọn)</span>
-            </Label>
-            <Textarea placeholder="Nhập điều khoản hợp đồng..." {...register("terms")} rows={3} />
+            <Label>Điều khoản</Label>
+            <Textarea placeholder="Nhập điều khoản hợp đồng..." {...register("terms")} rows={3} disabled={isEdit} className={isEdit ? "resize-none bg-muted" : ""} />
+            {errors.terms && <p className="text-sm text-destructive">{errors.terms.message as string}</p>}
           </div>
 
           {error && (
@@ -205,7 +204,7 @@ const WarrantyContractFormModal = ({ open, onClose, contract }: Props) => {
             </Button>
             <Button type="submit" disabled={isPending}>
               {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isEdit ? "Lưu" : "Tạo"}
+              {isEdit ? "Gia hạn" : "Tạo"}
             </Button>
           </DialogFooter>
         </form>

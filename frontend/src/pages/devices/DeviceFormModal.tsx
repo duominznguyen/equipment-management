@@ -34,9 +34,10 @@ interface Props {
 }
 
 const statusOptions = [
-  { value: "active", label: "Đang hoạt động" },
-  { value: "maintaining", label: "Đang bảo trì" },
-  { value: "broken", label: "Hỏng" },
+  { value: "active", label: "Hoạt động" },
+  { value: "inactive", label: "Ngừng HĐ" },
+  { value: "maintaining", label: "Bảo trì" },
+  { value: "broken", label: "Đang lỗi" },
 ];
 
 const DeviceFormModal = ({ open, onClose, device }: Props) => {
@@ -211,8 +212,8 @@ const DeviceFormModal = ({ open, onClose, device }: Props) => {
 
           <div className="space-y-2">
             <Label>Trạng thái</Label>
-            <Select defaultValue={device?.status || "active"} onValueChange={(val) => setValue("status", val)}>
-              <SelectTrigger>
+            <Select disabled defaultValue={device?.status || "active"} onValueChange={(val) => setValue("status", val)}>
+              <SelectTrigger className="bg-muted">
                 <SelectValue placeholder="Chọn trạng thái" />
               </SelectTrigger>
               <SelectContent>
@@ -224,6 +225,7 @@ const DeviceFormModal = ({ open, onClose, device }: Props) => {
               </SelectContent>
             </Select>
             {errors.status && <p className="text-sm text-destructive">{errors.status.message}</p>}
+            <p className="text-xs text-muted-foreground mt-1">Trạng thái được cập nhật tự động qua các luồng xử lý Ticket/Work Order.</p>
           </div>
 
           {error && (

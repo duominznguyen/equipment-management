@@ -3,14 +3,14 @@ export interface Customer {
   userId: number;
   fullName: string;
   phone: string;
-  address: string;
-  companyName?: string | null;
+  additionalInfo?: string | null;
   createdAt: string;
   user: {
     id: number;
     username: string;
     email: string;
     isActive: boolean;
+    lockReason?: string | null;
   };
 }
 

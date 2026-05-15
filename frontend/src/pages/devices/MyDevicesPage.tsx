@@ -7,15 +7,19 @@ import { useAuthStore } from '@/stores/auth.store'
 import { formatDate } from '@/utils/date'
 
 const statusLabels: Record<string, string> = {
-  active: 'Đang hoạt động',
-  maintaining: 'Đang bảo trì',
-  broken: 'Hỏng',
+  active: 'Hoạt động',
+  inactive: 'Ngừng HĐ',
+  maintaining: 'Bảo trì',
+  broken: 'Đang lỗi',
+  error: 'Đang lỗi',
 }
 
-const statusVariants: Record<string, 'default' | 'secondary' | 'destructive'> = {
+const statusVariants: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   active: 'default',
+  inactive: 'outline',
   maintaining: 'secondary',
   broken: 'destructive',
+  error: 'destructive',
 }
 
 const MyDevicesPage = () => {
@@ -42,7 +46,7 @@ const MyDevicesPage = () => {
       key: 'status',
       title: 'Trạng thái',
       render: (val: string) => (
-        <Badge variant={statusVariants[val]}>{statusLabels[val]}</Badge>
+        <Badge className="whitespace-nowrap" variant={statusVariants[val] || 'outline'}>{statusLabels[val] || val}</Badge>
       )
     },
     {

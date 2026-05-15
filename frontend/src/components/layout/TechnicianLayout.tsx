@@ -11,39 +11,36 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   Wrench,
-  Calendar,
-  Laptop,
   Package,
-  PackageMinus,
   LogOut,
   Menu,
   X,
   ChevronDown,
   ChevronRight,
+  ClipboardList,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const menuItems = [
   {
-    key: "maintenance-requests",
-    label: "Phiếu bảo trì",
-    icon: <Wrench size={18} />,
-    path: "/tech/maintenance-requests",
+    key: "work-orders",
+    label: "Danh sách công việc",
+    icon: <ClipboardList size={18} />,
+    path: "/tech/work-orders",
   },
   {
-    key: "maintenance-schedules",
-    label: "Lịch bảo trì",
-    icon: <Calendar size={18} />,
-    path: "/tech/maintenance-schedules",
+    key: "active-work",
+    label: "Công việc đang làm",
+    icon: <Wrench size={18} />,
+    path: "/tech/active-work",
   },
-  { key: "devices", label: "Thiết bị", icon: <Laptop size={18} />, path: "/tech/devices" },
   {
     key: "warehouse",
     label: "Kho linh kiện",
     icon: <Package size={18} />,
     children: [
       { key: "parts", label: "Danh mục linh kiện", path: "/tech/parts" },
-      { key: "part-exports", label: "Xuất kho", path: "/tech/part-exports" },
+      { key: "part-requests", label: "Lịch sử Yêu cầu", path: "/tech/part-requests" },
     ],
   },
 ];

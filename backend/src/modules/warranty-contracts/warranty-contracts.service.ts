@@ -3,12 +3,59 @@ import { getPaginationParams, paginate } from "../../utils/pagination.js";
 
 export const getAll = async (query: any) => {
   const params = getPaginationParams(query);
+  const { search, sortBy, sortOrder, status, startDate, endDate } = query;
+
+  const where: any = {};
+
+  if (search) {
+    const searchTerms = search.trim().split(/\s+/);
+    where.AND = searchTerms.map((term: string) => ({
+      OR: [
+        { contractNumber: { contains: term } },
+        { terms: { contains: term } },
+        { device: { name: { contains: term } } },
+        { device: { serialNumber: { contains: term } } },
+        { device: { customer: { fullName: { contains: term } } } },
+      ],
+    }));
+  }
+
+  if (status && status !== "all") {
+    where.status = status;
+  }
+
+  if (startDate || endDate) {
+    where.createdAt = {};
+    if (startDate) {
+      where.createdAt.gte = new Date(startDate);
+    }
+    if (endDate) {
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      where.createdAt.lte = end;
+    }
+  }
+
+  const orderBy: any = {};
+  if (sortBy === "contractNumber" || sortBy === "startDate" || sortBy === "endDate" || sortBy === "createdAt") {
+    orderBy[sortBy] = sortOrder || "desc";
+  } else {
+    orderBy.createdAt = "desc";
+  }
+
   return paginate(prisma.warrantyContract, params, {
+    where,
     include: {
-      device: { select: { id: true, name: true, serialNumber: true } },
-      customer: { select: { id: true, fullName: true, companyName: true } },
+      device: { 
+        select: { 
+          id: true, 
+          name: true, 
+          serialNumber: true,
+          customer: { select: { id: true, fullName: true, additionalInfo: true } }
+        } 
+      },
     },
-    orderBy: { createdAt: "desc" },
+    orderBy,
   });
 };
 
@@ -16,9 +63,12 @@ export const getById = async (id: number) => {
   const contract = await prisma.warrantyContract.findUnique({
     where: { id },
     include: {
-      device: true,
-      customer: {
-        select: { id: true, fullName: true, phone: true, companyName: true },
+      device: {
+        include: {
+          customer: {
+            select: { id: true, fullName: true, phone: true, additionalInfo: true },
+          }
+        }
       },
     },
   });
@@ -29,7 +79,7 @@ export const getById = async (id: number) => {
 export const getByCustomer = async (customerId: number, query: any) => {
   const params = getPaginationParams(query);
   return paginate(prisma.warrantyContract, params, {
-    where: { customerId },
+    where: { device: { customerId } },
     include: {
       device: { select: { id: true, name: true, serialNumber: true } },
     },
@@ -39,7 +89,6 @@ export const getByCustomer = async (customerId: number, query: any) => {
 
 export const create = async (data: {
   deviceId: number;
-  customerId: number;
   contractNumber: string;
   startDate: string;
   endDate: string;
@@ -58,10 +107,23 @@ export const create = async (data: {
     endDate < now ? "expired" : diffDays <= 30 ? "expiring_soon" : "active";
 
   return prisma.warrantyContract.create({
-    data: { ...data, startDate, endDate, status },
+    data: { 
+      deviceId: data.deviceId,
+      contractNumber: data.contractNumber,
+      terms: data.terms,
+      startDate, 
+      endDate, 
+      status 
+    },
     include: {
-      device: { select: { id: true, name: true, serialNumber: true } },
-      customer: { select: { id: true, fullName: true, companyName: true } },
+      device: { 
+        select: { 
+          id: true, 
+          name: true, 
+          serialNumber: true,
+          customer: { select: { id: true, fullName: true, additionalInfo: true } }
+        } 
+      },
     },
   });
 };
@@ -86,14 +148,20 @@ export const update = async (
   return prisma.warrantyContract.update({
     where: { id },
     data: {
-      ...data,
+      terms: data.terms,
       startDate: data.startDate ? new Date(data.startDate) : undefined,
       endDate: data.endDate ? new Date(data.endDate) : undefined,
       status,
     },
     include: {
-      device: { select: { id: true, name: true, serialNumber: true } },
-      customer: { select: { id: true, fullName: true, companyName: true } },
+      device: { 
+        select: { 
+          id: true, 
+          name: true, 
+          serialNumber: true,
+          customer: { select: { id: true, fullName: true, additionalInfo: true } }
+        } 
+      },
     },
   });
 };

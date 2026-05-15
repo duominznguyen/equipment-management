@@ -5,6 +5,7 @@ import {
   create,
   update,
   remove,
+  toggleLock,
 } from "./customers.controller.js";
 import { authMiddleware } from "../../middlewares/auth.middleware.js";
 import { roleMiddleware } from "../../middlewares/role.middleware.js";
@@ -15,6 +16,7 @@ router.get("/", authMiddleware, roleMiddleware("admin"), getAll);
 router.get("/:id", authMiddleware, roleMiddleware("admin"), getById);
 router.post("/", authMiddleware, roleMiddleware("admin"), create);
 router.put("/:id", authMiddleware, roleMiddleware("admin"), update);
+router.patch("/:id/lock", authMiddleware, roleMiddleware("admin"), toggleLock);
 router.delete("/:id", authMiddleware, roleMiddleware("admin"), remove);
 
 export default router;

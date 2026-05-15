@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createPartExport, getAllParts } from '@/services/part.service'
-import { getMaintenanceRequests } from '@/services/maintenance-request.service'
+import { getWorkOrders } from '@/services/work-order.service'
 import {
   Dialog, DialogContent, DialogHeader,
   DialogTitle, DialogFooter
@@ -12,24 +12,21 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import {
   Select, SelectContent, SelectItem,
   SelectTrigger, SelectValue
 } from '@/components/ui/select'
 import { Loader2, PlusCircle, Trash2 } from 'lucide-react'
-import { formatCurrency } from '@/utils/format'
 
 const schema = z.object({
-  exportCode: z.string().min(1, 'Vui lòng nhập mã phiếu'),
-  maintenanceRequestId: z.string().min(1, 'Vui lòng chọn phiếu bảo trì'),
   exportDate: z.string().min(1, 'Vui lòng chọn ngày xuất'),
-  note: z.string().optional(),
+  reason: z.string().optional(),
 })
 
 interface DetailItem {
   partId: string
   quantity: string
-  unitPrice: string
 }
 
 interface Props {
@@ -40,11 +37,14 @@ interface Props {
 const PartExportFormModal = ({ open, onClose }: Props) => {
   const queryClient = useQueryClient()
   const [details, setDetails] = useState<DetailItem[]>([
-    { partId: '', quantity: '', unitPrice: '' }
+    { partId: '', quantity: '1' }
   ])
 
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<any>({
-    resolver: zodResolver(schema)
+    resolver: zodResolver(schema),
+    defaultValues: {
+      exportDate: new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)
+    }
   })
 
   const { data: parts = [] } = useQuery({
@@ -52,12 +52,12 @@ const PartExportFormModal = ({ open, onClose }: Props) => {
     queryFn: getAllParts,
   })
 
-  const { data: requestsData } = useQuery({
-    queryKey: ['maintenance-requests-all'],
-    queryFn: () => getMaintenanceRequests(1, 100),
+  const { data: workOrdersData } = useQuery({
+    queryKey: ['work-orders-all'],
+    queryFn: () => getWorkOrders(1, 100),
   })
 
-  const addDetail = () => setDetails([...details, { partId: '', quantity: '', unitPrice: '' }])
+  const addDetail = () => setDetails([...details, { partId: '', quantity: '1' }])
   const removeDetail = (index: number) => setDetails(details.filter((_, i) => i !== index))
   const updateDetail = (index: number, field: keyof DetailItem, value: string) => {
     const updated = [...details]
@@ -65,32 +65,26 @@ const PartExportFormModal = ({ open, onClose }: Props) => {
     setDetails(updated)
   }
 
-  const totalCost = details.reduce((sum, d) =>
-    sum + (Number(d.quantity) || 0) * (Number(d.unitPrice) || 0), 0
-  )
-
   const mutation = useMutation({
     mutationFn: (data: any) => createPartExport({
       ...data,
-      maintenanceRequestId: Number(data.maintenanceRequestId),
       details: details.map(d => ({
         partId: Number(d.partId),
         quantity: Number(d.quantity),
-        unitPrice: Number(d.unitPrice),
       }))
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['part-exports'] })
       queryClient.invalidateQueries({ queryKey: ['parts'] })
       reset()
-      setDetails([{ partId: '', quantity: '', unitPrice: '' }])
+      setDetails([{ partId: '', quantity: '1' }])
       onClose()
     }
   })
 
   const handleClose = () => {
     reset()
-    setDetails([{ partId: '', quantity: '', unitPrice: '' }])
+    setDetails([{ partId: '', quantity: '1' }])
     onClose()
   }
 
@@ -102,39 +96,17 @@ const PartExportFormModal = ({ open, onClose }: Props) => {
         </DialogHeader>
 
         <form onSubmit={handleSubmit((data) => mutation.mutate(data))} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Mã phiếu xuất</Label>
-              <Input placeholder="VD: EXP002" {...register('exportCode')} />
-              {errors.exportCode && <p className="text-sm text-destructive">{errors.exportCode.message as string}</p>}
-            </div>
+          <div className="grid grid-cols-1 gap-4">
             <div className="space-y-2">
               <Label>Ngày xuất</Label>
-              <Input type="date" {...register('exportDate')} />
+              <Input type="datetime-local" {...register('exportDate')} />
               {errors.exportDate && <p className="text-sm text-destructive">{errors.exportDate.message as string}</p>}
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label>Phiếu bảo trì liên quan</Label>
-            <Select onValueChange={(val) => setValue('maintenanceRequestId', val)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Chọn phiếu bảo trì" />
-              </SelectTrigger>
-              <SelectContent>
-                {requestsData?.data?.map((r: any) => (
-                  <SelectItem key={r.id} value={String(r.id)}>
-                    #{r.id} - {r.device.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.maintenanceRequestId && <p className="text-sm text-destructive">{errors.maintenanceRequestId.message as string}</p>}
-          </div>
-
-          <div className="space-y-2">
-            <Label>Ghi chú <span className="text-muted-foreground">(tuỳ chọn)</span></Label>
-            <Input placeholder="Ghi chú..." {...register('note')} />
+            <Label>Lý do xuất kho</Label>
+            <Textarea placeholder="Lý do xuất..." {...register('reason')} />
           </div>
 
           <div className="space-y-2">
@@ -158,7 +130,7 @@ const PartExportFormModal = ({ open, onClose }: Props) => {
                       </SelectTrigger>
                       <SelectContent>
                         {parts.map((p: any) => (
-                          <SelectItem key={p.id} value={String(p.id)}>
+                          <SelectItem key={p.id} value={String(p.id)} disabled={p.stockQuantity <= 0}>
                             {p.name} (còn {p.stockQuantity})
                           </SelectItem>
                         ))}
@@ -167,17 +139,12 @@ const PartExportFormModal = ({ open, onClose }: Props) => {
                   </div>
                   <Input
                     type="number"
+                    min="1"
                     placeholder="Số lượng"
                     value={detail.quantity}
                     onChange={(e) => updateDetail(index, 'quantity', e.target.value)}
                   />
-                  <div className="flex gap-1">
-                    <Input
-                      type="number"
-                      placeholder="Đơn giá"
-                      value={detail.unitPrice}
-                      onChange={(e) => updateDetail(index, 'unitPrice', e.target.value)}
-                    />
+                  <div className="flex justify-end">
                     {details.length > 1 && (
                       <Button type="button" size="icon" variant="destructive" onClick={() => removeDetail(index)}>
                         <Trash2 className="h-3 w-3" />
@@ -186,10 +153,6 @@ const PartExportFormModal = ({ open, onClose }: Props) => {
                   </div>
                 </div>
               ))}
-            </div>
-
-            <div className="text-right text-sm font-medium">
-              Tổng tiền: <span className="text-primary">{formatCurrency(totalCost)}</span>
             </div>
           </div>
 

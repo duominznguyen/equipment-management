@@ -4,13 +4,61 @@ import { getPaginationParams, paginate } from "../../utils/pagination.js";
 
 export const getAll = async (query: any) => {
   const params = getPaginationParams(query);
+  const { search, sortBy, sortOrder, isActive, startDate, endDate } = query;
+
+  const where: any = {};
+
+  if (search) {
+    const searchTerms = search.trim().split(/\s+/);
+    where.AND = searchTerms.map((term: string) => {
+      const parsedId = parseInt(term.replace(/^KH/i, ""), 10);
+      const orConditions: any[] = [
+        { fullName: { contains: term } },
+        { phone: { contains: term } },
+        { user: { username: { contains: term } } },
+        { user: { email: { contains: term } } },
+      ];
+      if (!isNaN(parsedId)) {
+        orConditions.push({ id: parsedId });
+      }
+      return { OR: orConditions };
+    });
+  }
+
+  if (isActive !== undefined && isActive !== "") {
+    if (!where.user) where.user = {};
+    where.user.isActive = isActive === "true";
+  }
+
+  if (startDate || endDate) {
+    where.createdAt = {};
+    if (startDate) {
+      where.createdAt.gte = new Date(startDate);
+    }
+    if (endDate) {
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      where.createdAt.lte = end;
+    }
+  }
+
+  const orderBy: any = {};
+  if (sortBy === "username" || sortBy === "email") {
+    orderBy.user = { [sortBy]: sortOrder || "asc" };
+  } else if (sortBy === "fullName" || sortBy === "createdAt") {
+    orderBy[sortBy] = sortOrder || "asc";
+  } else {
+    orderBy.createdAt = "desc";
+  }
+
   return paginate(prisma.customer, params, {
+    where,
     include: {
       user: {
-        select: { id: true, username: true, email: true, isActive: true },
+        select: { id: true, username: true, email: true, isActive: true, lockReason: true },
       },
     },
-    orderBy: { createdAt: "desc" },
+    orderBy,
   });
 };
 
@@ -19,10 +67,9 @@ export const getById = async (id: number) => {
     where: { id },
     include: {
       user: {
-        select: { id: true, username: true, email: true, isActive: true },
+        select: { id: true, username: true, email: true, isActive: true, lockReason: true },
       },
       devices: true,
-      warrantyContracts: true,
     },
   });
   if (!customer) throw new Error("Khách hàng không tồn tại");
@@ -35,8 +82,7 @@ export const create = async (data: {
   email: string;
   fullName: string;
   phone: string;
-  address: string;
-  companyName?: string;
+  additionalInfo?: string;
 }) => {
   const existingUsername = await prisma.user.findUnique({
     where: { username: data.username },
@@ -65,12 +111,11 @@ export const create = async (data: {
         userId: user.id,
         fullName: data.fullName,
         phone: data.phone,
-        address: data.address,
-        companyName: data.companyName,
+        additionalInfo: data.additionalInfo,
       },
       include: {
         user: {
-          select: { id: true, username: true, email: true, isActive: true },
+          select: { id: true, username: true, email: true, isActive: true, lockReason: true },
         },
       },
     });
@@ -82,8 +127,7 @@ export const update = async (
   data: {
     fullName?: string;
     phone?: string;
-    address?: string;
-    companyName?: string;
+    additionalInfo?: string;
   },
 ) => {
   const customer = await prisma.customer.findUnique({ where: { id } });
@@ -93,7 +137,7 @@ export const update = async (
     data,
     include: {
       user: {
-        select: { id: true, username: true, email: true, isActive: true },
+        select: { id: true, username: true, email: true, isActive: true, lockReason: true },
       },
     },
   });
@@ -105,5 +149,18 @@ export const remove = async (id: number) => {
   return prisma.$transaction(async (tx) => {
     await tx.customer.delete({ where: { id } });
     await tx.user.delete({ where: { id: customer.userId } });
+  });
+};
+
+export const toggleLock = async (id: number, isActive: boolean, lockReason?: string) => {
+  const customer = await prisma.customer.findUnique({ where: { id } });
+  if (!customer) throw new Error("Khách hàng không tồn tại");
+  
+  return prisma.user.update({
+    where: { id: customer.userId },
+    data: {
+      isActive,
+      lockReason: isActive ? null : lockReason,
+    },
   });
 };

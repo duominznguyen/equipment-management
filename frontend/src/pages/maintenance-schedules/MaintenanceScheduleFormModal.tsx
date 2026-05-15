@@ -1,31 +1,34 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createMaintenanceSchedule, updateMaintenanceSchedule } from "@/services/maintenance-schedule.service";
 import { getDevices } from "@/services/device.service";
-import { getTechnicians } from "@/services/technician.service";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Loader2, Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { MaintenanceSchedule } from "@/types/maintenance-schedule.type";
 
 const createSchema = z.object({
   deviceId: z.string().min(1, "Vui lòng chọn thiết bị"),
-  technicianId: z.string().min(1, "Vui lòng chọn kỹ thuật viên"),
-  scheduledDate: z.string().min(1, "Vui lòng chọn ngày bảo trì"),
-  description: z.string().optional(),
+  lastMaintenanceDate: z.string().optional(),
+  maintenanceIntervalDays: z.number().min(1, "Chu kỳ bảo trì ít nhất là 1 ngày"),
+  leadTimeDays: z.number().min(1, "Số ngày báo trước ít nhất là 1"),
+  isContinueMaintain: z.boolean().default(true),
 });
 
 const editSchema = z.object({
-  technicianId: z.string().min(1, "Vui lòng chọn kỹ thuật viên"),
-  scheduledDate: z.string().min(1, "Vui lòng chọn ngày bảo trì"),
-  description: z.string().optional(),
+  lastMaintenanceDate: z.string().optional(),
+  maintenanceIntervalDays: z.number().min(1, "Chu kỳ bảo trì ít nhất là 1 ngày"),
+  leadTimeDays: z.number().min(1, "Số ngày báo trước ít nhất là 1"),
+  isContinueMaintain: z.boolean().default(true),
 });
 
 interface Props {
@@ -37,15 +40,22 @@ interface Props {
 const MaintenanceScheduleFormModal = ({ open, onClose, schedule }: Props) => {
   const queryClient = useQueryClient();
   const isEdit = !!schedule;
+  const [openDevice, setOpenDevice] = useState(false);
 
   const {
     register,
     handleSubmit,
     reset,
     setValue,
+    watch,
     formState: { errors },
   } = useForm<any>({
     resolver: zodResolver(isEdit ? editSchema : createSchema),
+    defaultValues: {
+      maintenanceIntervalDays: 30,
+      leadTimeDays: 7,
+      isContinueMaintain: true,
+    }
   });
 
   const { data: devicesData } = useQuery({
@@ -53,20 +63,26 @@ const MaintenanceScheduleFormModal = ({ open, onClose, schedule }: Props) => {
     queryFn: () => getDevices(1, 100),
   });
 
-  const { data: techniciansData } = useQuery({
-    queryKey: ["technicians-all"],
-    queryFn: () => getTechnicians(1, 100),
-  });
-
   useEffect(() => {
     if (schedule) {
       reset({
-        technicianId: String(schedule.technicianId),
-        scheduledDate: schedule.scheduledDate.split("T")[0],
-        description: schedule.description || "",
+        lastMaintenanceDate: schedule.lastMaintenanceDate ? schedule.lastMaintenanceDate.split("T")[0] : "",
+        maintenanceIntervalDays: schedule.maintenanceIntervalDays || 30,
+        leadTimeDays: schedule.leadTimeDays,
+        isContinueMaintain: schedule.isContinueMaintain,
       });
     } else {
-      reset({});
+      const d = new Date();
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      
+      reset({
+        lastMaintenanceDate: `${yyyy}-${mm}-${dd}`,
+        maintenanceIntervalDays: 30,
+        leadTimeDays: 7,
+        isContinueMaintain: true,
+      });
     }
   }, [schedule, reset]);
 
@@ -75,7 +91,6 @@ const MaintenanceScheduleFormModal = ({ open, onClose, schedule }: Props) => {
       createMaintenanceSchedule({
         ...data,
         deviceId: Number(data.deviceId),
-        technicianId: Number(data.technicianId),
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["maintenance-schedules"] });
@@ -88,7 +103,6 @@ const MaintenanceScheduleFormModal = ({ open, onClose, schedule }: Props) => {
     mutationFn: (data: any) =>
       updateMaintenanceSchedule(schedule!.id, {
         ...data,
-        technicianId: Number(data.technicianId),
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["maintenance-schedules"] });
@@ -103,6 +117,8 @@ const MaintenanceScheduleFormModal = ({ open, onClose, schedule }: Props) => {
 
   const isPending = createMutation.isPending || updateMutation.isPending;
   const error = createMutation.error || updateMutation.error;
+  const isContinueMaintain = watch("isContinueMaintain");
+  const deviceId = watch("deviceId");
 
   return (
     <Dialog
@@ -121,64 +137,107 @@ const MaintenanceScheduleFormModal = ({ open, onClose, schedule }: Props) => {
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {!isEdit && (
-            <div className="space-y-2">
+            <div className="space-y-2 flex flex-col">
               <Label>Thiết bị</Label>
-              <Select onValueChange={(val) => setValue("deviceId", val)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Chọn thiết bị" />
-                </SelectTrigger>
-                <SelectContent>
-                  {devicesData?.data?.map((d: any) => (
-                    <SelectItem key={d.id} value={String(d.id)}>
-                      {d.name} - {d.serialNumber}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover open={openDevice} onOpenChange={setOpenDevice} modal={true}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={openDevice}
+                    className="w-full justify-between font-normal"
+                  >
+                    {deviceId 
+                      ? (() => {
+                          const d = devicesData?.data?.find((x: any) => String(x.id) === String(deviceId));
+                          if (d) return `[TB${String(d.id).padStart(4, "0")}] ${d.name}`;
+                          return "Chọn thiết bị...";
+                        })()
+                      : "Chọn thiết bị..."}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[460px] p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder="Tìm mã hoặc tên thiết bị..." />
+                    <CommandList>
+                      <CommandEmpty>Không tìm thấy thiết bị nào.</CommandEmpty>
+                      <CommandGroup>
+                        {devicesData?.data?.map((d: any) => {
+                          const deviceCode = `TB${String(d.id).padStart(4, "0")}`;
+                          return (
+                            <CommandItem
+                              key={d.id}
+                              value={`${deviceCode} ${d.name} ${d.serialNumber}`}
+                              onSelect={() => {
+                                setValue("deviceId", String(d.id), { shouldValidate: true });
+                                setOpenDevice(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  String(deviceId) === String(d.id) ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              [{deviceCode}] {d.name} - S/N: {d.serialNumber}
+                            </CommandItem>
+                          );
+                        })}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
               {errors.deviceId && <p className="text-sm text-destructive">{errors.deviceId.message as string}</p>}
             </div>
           )}
 
           <div className="space-y-2">
-            <Label>Kỹ thuật viên</Label>
-            <Select
-              defaultValue={schedule ? String(schedule.technicianId) : ""}
-              onValueChange={(val) => setValue("technicianId", val)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Chọn kỹ thuật viên" />
-              </SelectTrigger>
-              <SelectContent>
-                {techniciansData?.data?.map((t: any) => (
-                  <SelectItem key={t.id} value={String(t.id)}>
-                    {t.fullName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.technicianId && <p className="text-sm text-destructive">{errors.technicianId.message as string}</p>}
+            <Label>Lần bảo trì cuối</Label>
+            <Input type="date" {...register("lastMaintenanceDate")} />
           </div>
 
           <div className="space-y-2">
-            <Label>Ngày bảo trì</Label>
-            <Input type="date" {...register("scheduledDate")} />
-            {errors.scheduledDate && (
-              <p className="text-sm text-destructive">{errors.scheduledDate.message as string}</p>
+            <Label>Chu kỳ bảo trì (ngày)</Label>
+            <Input 
+              type="number" 
+              {...register("maintenanceIntervalDays", { valueAsNumber: true })} 
+              min={1} 
+            />
+            {errors.maintenanceIntervalDays && (
+              <p className="text-sm text-destructive">{errors.maintenanceIntervalDays.message as string}</p>
             )}
           </div>
 
           <div className="space-y-2">
-            <Label>
-              Mô tả <span className="text-muted-foreground">(tuỳ chọn)</span>
+            <Label>Số ngày báo trước</Label>
+            <Input 
+              type="number" 
+              {...register("leadTimeDays", { valueAsNumber: true })} 
+              min={1} 
+            />
+            {errors.leadTimeDays && (
+              <p className="text-sm text-destructive">{errors.leadTimeDays.message as string}</p>
+            )}
+          </div>
+
+          <div className="flex items-center space-x-2 pt-2">
+            <Checkbox 
+              id="isContinueMaintain" 
+              checked={isContinueMaintain}
+              onCheckedChange={(checked) => setValue("isContinueMaintain", checked)}
+            />
+            <Label htmlFor="isContinueMaintain" className="font-normal cursor-pointer">
+              Tiếp tục bảo trì định kỳ cho thiết bị này
             </Label>
-            <Textarea placeholder="Mô tả công việc bảo trì..." rows={3} {...register("description")} />
           </div>
 
           {error && (
             <p className="text-sm text-destructive">{(error as any)?.response?.data?.message || "Có lỗi xảy ra"}</p>
           )}
 
-          <DialogFooter>
+          <DialogFooter className="pt-4">
             <Button
               type="button"
               variant="outline"

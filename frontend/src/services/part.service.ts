@@ -1,7 +1,7 @@
 import api from "./api";
 
-export const getParts = async (page = 1, pageSize = 10) => {
-  const res = await api.get("/parts", { params: { page, pageSize } });
+export const getParts = async (page = 1, pageSize = 10, filters?: any) => {
+  const res = await api.get("/parts", { params: { page, pageSize, ...filters } });
   return res.data;
 };
 
@@ -41,13 +41,17 @@ export const deletePart = async (id: number) => {
 };
 
 // Part Imports
-export const getPartImports = async (page = 1, pageSize = 10) => {
-  const res = await api.get("/part-imports", { params: { page, pageSize } });
+export const getPartImports = async (page = 1, pageSize = 10, filters?: any) => {
+  const res = await api.get("/part-imports", { params: { page, pageSize, ...filters } });
+  return res.data;
+};
+
+export const getPartImportById = async (id: number) => {
+  const res = await api.get(`/part-imports/${id}`);
   return res.data;
 };
 
 export const createPartImport = async (data: {
-  importCode: string;
   supplier: string;
   importDate: string;
   note?: string;
@@ -57,19 +61,52 @@ export const createPartImport = async (data: {
   return res.data;
 };
 
+export const updatePartImport = async (id: number, data: { supplier?: string; note?: string }) => {
+  const res = await api.put(`/part-imports/${id}`, data);
+  return res.data;
+};
+
+export const updatePartImportStatus = async (id: number, status: string, rejectReason?: string) => {
+  const res = await api.put(`/part-imports/${id}/status`, { status, rejectReason });
+  return res.data;
+};
+
+export const deletePartImport = async (id: number) => {
+  const res = await api.delete(`/part-imports/${id}`);
+  return res.data;
+};
+
 // Part Exports
-export const getPartExports = async (page = 1, pageSize = 10) => {
-  const res = await api.get("/part-exports", { params: { page, pageSize } });
+export const getPartExports = async (page = 1, pageSize = 10, filters?: any) => {
+  const res = await api.get("/part-exports", { params: { page, pageSize, ...filters } });
+  return res.data;
+};
+
+export const getPartExportById = async (id: number) => {
+  const res = await api.get(`/part-exports/${id}`);
   return res.data;
 };
 
 export const createPartExport = async (data: {
-  exportCode: string;
-  maintenanceRequestId: number;
-  exportDate: string;
-  note?: string;
-  details: { partId: number; quantity: number; unitPrice: number }[];
+  exportDate?: string;
+  reason?: string;
+  details: { partId: number; quantity: number }[];
 }) => {
   const res = await api.post("/part-exports", data);
+  return res.data;
+};
+
+export const updatePartExportStatus = async (id: number, status: string, rejectReason?: string) => {
+  const res = await api.put(`/part-exports/${id}/status`, { status, rejectReason });
+  return res.data;
+};
+
+export const updatePartExport = async (id: number, data: { reason?: string }) => {
+  const res = await api.put(`/part-exports/${id}`, data);
+  return res.data;
+};
+
+export const deletePartExport = async (id: number) => {
+  const res = await api.delete(`/part-exports/${id}`);
   return res.data;
 };

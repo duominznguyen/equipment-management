@@ -13,7 +13,6 @@ import { Loader2, PlusCircle, Trash2 } from "lucide-react";
 import { formatCurrency } from "@/utils/format";
 
 const schema = z.object({
-  importCode: z.string().min(1, "Vui lòng nhập mã phiếu"),
   supplier: z.string().min(1, "Vui lòng nhập nhà cung cấp"),
   importDate: z.string().min(1, "Vui lòng chọn ngày nhập"),
   note: z.string().optional(),
@@ -41,6 +40,9 @@ const PartImportFormModal = ({ open, onClose }: Props) => {
     formState: { errors },
   } = useForm<any>({
     resolver: zodResolver(schema),
+    defaultValues: {
+      importDate: new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)
+    }
   });
 
   const { data: parts = [] } = useQuery({
@@ -104,15 +106,10 @@ const PartImportFormModal = ({ open, onClose }: Props) => {
         </DialogHeader>
 
         <form onSubmit={handleSubmit((data) => mutation.mutate(data))} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Mã phiếu nhập</Label>
-              <Input placeholder="VD: IMP002" {...register("importCode")} />
-              {errors.importCode && <p className="text-sm text-destructive">{errors.importCode.message as string}</p>}
-            </div>
+          <div className="grid grid-cols-1 gap-4">
             <div className="space-y-2">
               <Label>Ngày nhập</Label>
-              <Input type="date" {...register("importDate")} />
+              <Input type="datetime-local" {...register("importDate")} />
               {errors.importDate && <p className="text-sm text-destructive">{errors.importDate.message as string}</p>}
             </div>
           </div>
@@ -158,6 +155,7 @@ const PartImportFormModal = ({ open, onClose }: Props) => {
                   </div>
                   <Input
                     type="number"
+                    min="1"
                     placeholder="Số lượng"
                     value={detail.quantity}
                     onChange={(e) => updateDetail(index, "quantity", e.target.value)}
@@ -165,6 +163,7 @@ const PartImportFormModal = ({ open, onClose }: Props) => {
                   <div className="flex gap-1">
                     <Input
                       type="number"
+                      min="0"
                       placeholder="Đơn giá"
                       value={detail.unitPrice}
                       onChange={(e) => updateDetail(index, "unitPrice", e.target.value)}

@@ -41,8 +41,8 @@ const LoginPage = () => {
       console.log("Auth set, navigating...");
 
       // Redirect theo role
-      if (data.user.role === "admin") navigate("/dashboard");
-      else if (data.user.role === "technician") navigate("/tech");
+      if (data.user.role === "admin") navigate("/work-orders");
+      else if (data.user.role === "technician") navigate("/tech/work-orders");
       else navigate("/my");
     } catch (err: any) {
       setError(err.response?.data?.message || "Đăng nhập thất bại");

@@ -1,20 +1,27 @@
 export interface MaintenanceSchedule {
   id: number;
   deviceId: number;
-  technicianId: number;
-  scheduledDate: string;
-  description?: string | null;
-  status: "upcoming" | "completed" | "overdue";
-  createdAt: string;
+  lastMaintenanceDate: string;
+  nextMaintenanceDate?: string | null;
+  maintenanceIntervalDays: number;
+  leadTimeDays: number;
+  isHandled: boolean;
+  isContinueMaintain: boolean;
   device: {
     id: number;
     name: string;
     serialNumber: string;
+    categoryId?: number;
+    customer?: {
+      id: number;
+      fullName: string;
+      additionalInfo?: string | null;
+    };
   };
-  technician: {
-    id: number;
-    fullName: string;
+  _count?: {
+    workOrders: number;
   };
+  workOrders?: any[];
 }
 
 export interface PaginatedMaintenanceSchedules {
