@@ -9,6 +9,12 @@ export const getAll = async (user: { id: number, role: string }, query: any) => 
 
   if (user.role === 'technician') {
     where.importedBy = user.id;
+  } else if (user.role === 'admin') {
+    if (query.creatorRole === 'admin') {
+      where.user = { role: 'admin' };
+    } else if (query.creatorRole === 'technician') {
+      where.user = { role: 'technician' };
+    }
   }
 
   if (search) {

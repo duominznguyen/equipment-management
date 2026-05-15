@@ -66,6 +66,11 @@ export const updatePartImport = async (id: number, data: { supplier?: string; no
   return res.data;
 };
 
+export const updatePartImportStatus = async (id: number, status: string, rejectReason?: string) => {
+  const res = await api.put(`/part-imports/${id}/status`, { status, rejectReason });
+  return res.data;
+};
+
 export const deletePartImport = async (id: number) => {
   const res = await api.delete(`/part-imports/${id}`);
   return res.data;

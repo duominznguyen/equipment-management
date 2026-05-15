@@ -62,6 +62,7 @@ const menuItems: MenuItem[] = [
     icon: <Package size={18} />,
     children: [
       { key: "parts", label: "Danh mục linh kiện", path: "/parts" },
+      { key: "part-requests", label: "Yêu cầu linh kiện", path: "/part-requests" },
       { key: "part-imports", label: "Nhập kho", path: "/part-imports" },
       { key: "part-exports", label: "Xuất kho", path: "/part-exports" },
     ],
