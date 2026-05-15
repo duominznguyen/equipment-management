@@ -1,19 +1,19 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/auth.store";
-import { getWorkOrders } from "@/services/work-order.service";
+import { getWorkOrders, deleteWorkOrder, updateWorkOrderStatus } from "@/services/work-order.service";
 import { DataTable } from "@/components/DataTable";
 import { usePagination } from "@/hooks/usePagination";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { PlusCircle, Pencil, Trash2, Eye, ArrowUp, ArrowDown } from "lucide-react";
+import { PlusCircle, Pencil, Trash2, Eye, ArrowUp, ArrowDown, ArrowRight, Check, X, Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { WorkOrder } from "@/types/work-order.type";
 import { formatDateTime } from "@/utils/date";
 import CreateWorkOrderModal from "./CreateWorkOrderModal";
-import { deleteWorkOrder } from "@/services/work-order.service";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,6 +25,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const statusLabels: Record<string, string> = {
   pending: "Chờ xử lý",
@@ -38,18 +44,30 @@ const statusVariants: Record<string, "default" | "secondary" | "destructive"> = 
   completed: "secondary",
 };
 
-const WorkOrderListPage = () => {
+const WorkOrderListPage = ({ 
+  defaultStatus = "pending", 
+  hideStatusFilter = false 
+}: { 
+  defaultStatus?: string;
+  hideStatusFilter?: boolean;
+}) => {
   const { user } = useAuthStore();
   const isAdmin = user?.role === "admin";
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedWorkOrder, setSelectedWorkOrder] = useState<WorkOrder | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{
+    id: number;
+    status: string;
+    title: string;
+    description: string;
+  } | null>(null);
   const { page, pageSize, setPage, setPageSize } = usePagination();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
   // Search, filter, sort states
   const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("pending");
+  const [status, setStatus] = useState(defaultStatus);
   const [sortBy, setSortBy] = useState("createdAt");
   const [sortOrder, setSortOrder] = useState("asc");
 
@@ -60,6 +78,11 @@ const WorkOrderListPage = () => {
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => deleteWorkOrder(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["work-orders"] }),
+  });
+
+  const statusMutation = useMutation({
+    mutationFn: ({ id, status }: { id: number; status: string }) => updateWorkOrderStatus(id, status),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["work-orders"] }),
   });
 
@@ -135,10 +158,69 @@ const WorkOrderListPage = () => {
             variant="outline"
             className="text-primary hover:text-primary"
             title="Xem chi tiết"
-            onClick={() => navigate(`/work-orders/${record.id}`)}
+            onClick={() => navigate(isAdmin ? `/work-orders/${record.id}` : `/tech/work-orders/${record.id}`)}
           >
             <Eye className="h-4 w-4" />
           </Button>
+          {!isAdmin && record.status === "pending" && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button size="sm" variant="outline" title="Tiếp nhận công việc">
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Xác nhận tiếp nhận</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Bạn có chắc chắn muốn tiếp nhận Work Order này không? Trạng thái sẽ được chuyển sang "Đang xử lý".
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Hủy</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => statusMutation.mutate({ id: record.id, status: "processing" })}
+                    className="bg-blue-600 text-white hover:bg-blue-700"
+                  >
+                    Tiếp nhận
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+          {!isAdmin && record.status === "processing" && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm" variant="outline" title="Xử lý">
+                  <Settings className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem
+                  onClick={() => setConfirmAction({
+                    id: record.id,
+                    status: "completed",
+                    title: "Xác nhận hoàn thành",
+                    description: "Bạn có chắc chắn muốn hoàn thành Work Order này không? Trạng thái sẽ được chuyển sang 'Hoàn thành' và không thể thay đổi."
+                  })}
+                >
+                  <Check className="mr-2 h-4 w-4" />
+                  Xác nhận hoàn thành
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setConfirmAction({
+                    id: record.id,
+                    status: "pending",
+                    title: "Hủy tiếp nhận công việc",
+                    description: "Bạn có chắc chắn muốn hủy tiếp nhận Work Order này không? Trạng thái sẽ quay lại 'Chờ xử lý'."
+                  })}
+                >
+                  <X className="mr-2 h-4 w-4" />
+                  Bỏ tiếp nhận
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
           {isAdmin && (
             <Button
               size="sm"
@@ -209,23 +291,25 @@ const WorkOrderListPage = () => {
             className="w-full h-10 bg-background"
           />
         </div>
-        
+
         <div className="flex flex-col md:flex-row gap-4 w-full lg:w-auto">
-          <div className="w-full md:w-auto">
-            <label className="text-xs text-muted-foreground mb-1 block">Trạng thái</label>
-            <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger className="w-full md:w-[180px] h-10 bg-background">
-                <SelectValue placeholder="Trạng thái" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                <SelectItem value="pending">Chờ xử lý</SelectItem>
-                <SelectItem value="processing">Đang xử lý</SelectItem>
-                <SelectItem value="completed">Hoàn thành</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
+          {!hideStatusFilter && (
+            <div className="w-full md:w-auto">
+              <label className="text-xs text-muted-foreground mb-1 block">Trạng thái</label>
+              <Select value={status} onValueChange={setStatus}>
+                <SelectTrigger className="w-full md:w-[180px] h-10 bg-background">
+                  <SelectValue placeholder="Trạng thái" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                  <SelectItem value="pending">Chờ xử lý</SelectItem>
+                  <SelectItem value="processing">Đang xử lý</SelectItem>
+                  <SelectItem value="completed">Hoàn thành</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           <div className="w-full md:w-auto">
             <label className="text-xs text-muted-foreground mb-1 block">Sắp xếp theo</label>
             <div className="flex gap-2">
@@ -238,8 +322,8 @@ const WorkOrderListPage = () => {
                   <SelectItem value="id">Mã Work Order</SelectItem>
                 </SelectContent>
               </Select>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
                 className="px-3 bg-background h-10"
               >
@@ -262,6 +346,29 @@ const WorkOrderListPage = () => {
       />
 
       <CreateWorkOrderModal open={isModalOpen} onClose={handleClose} workOrder={selectedWorkOrder} />
+
+      <AlertDialog open={!!confirmAction} onOpenChange={(open) => !open && setConfirmAction(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{confirmAction?.title}</AlertDialogTitle>
+            <AlertDialogDescription>{confirmAction?.description}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (confirmAction) {
+                  statusMutation.mutate({ id: confirmAction.id, status: confirmAction.status });
+                  setConfirmAction(null);
+                }
+              }}
+              className={confirmAction?.status === "completed" ? "bg-green-600 text-white hover:bg-green-700" : "bg-destructive text-white hover:bg-destructive/90"}
+            >
+              Xác nhận
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

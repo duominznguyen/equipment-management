@@ -3,9 +3,12 @@ import { getPaginationParams, paginate } from "../../utils/pagination.js";
 
 export const getAll = async (query: any) => {
   const params = getPaginationParams(query);
-  const { search, status, sortBy = "createdAt", sortOrder = "desc" } = query;
+  const { search, status, sortBy = "createdAt", sortOrder = "asc", technicianId } = query;
 
   const where: any = {};
+  if (technicianId) {
+    where.technicianId = Number(technicianId);
+  }
 
   if (search) {
     const searchTerms = search.trim().split(/\s+/);
@@ -162,8 +165,13 @@ export const updateStatus = async (id: number, status: string) => {
   if (!request) throw new Error("Work Order không tồn tại");
 
   const data: any = { status };
+  if (status === "pending") {
+    data.startedAt = null;
+    data.completedAt = null;
+  }
   if (status === "processing" || status === "in_progress") {
     data.startedAt = new Date();
+    data.completedAt = null;
   }
   if (status === "completed") {
     data.completedAt = new Date();

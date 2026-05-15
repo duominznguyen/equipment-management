@@ -4,7 +4,11 @@ import * as Service from "./work-orders.service.js";
 
 export const getAll = async (req: AuthRequest, res: Response) => {
   try {
-    res.json(await Service.getAll(req.query));
+    const query: any = { ...req.query };
+    if (req.user?.role === "technician") {
+      query.technicianId = req.user.id;
+    }
+    res.json(await Service.getAll(query));
   } catch (error: any) {
     res.status(500).json({ message: error.message });
   }

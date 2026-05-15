@@ -31,8 +31,8 @@ const RootRedirect = () => {
   const { token, user, isLoading } = useAuthStore();
   if (isLoading) return null;
   if (!token) return <Navigate to="/login" replace />;
-  if (user?.role === "admin") return <Navigate to="/dashboard" replace />;
-  if (user?.role === "technician") return <Navigate to="/tech" replace />;
+  if (user?.role === "admin") return <Navigate to="/work-orders" replace />;
+  if (user?.role === "technician") return <Navigate to="/tech/work-orders" replace />;
   return <Navigate to="/my" replace />;
 };
 
@@ -90,7 +90,8 @@ const router = createBrowserRouter([
     children: [
       // Trang mặc định khi vào /tech
       { index: true, element: <div className="p-4">Chào mừng Kỹ thuật viên!</div> },
-      { path: "work-orders", element: <WorkOrderListPage /> },
+      { path: "work-orders", element: <WorkOrderListPage key="pending" defaultStatus="pending" /> },
+      { path: "active-work", element: <WorkOrderListPage key="processing" defaultStatus="processing" hideStatusFilter={true} /> },
       { path: "work-orders/:id", element: <WorkOrderDetailPage /> },
       { path: "maintenance-schedules", element: <MaintenanceScheduleListPage /> },
       { path: "maintenance-schedules/:id", element: <MaintenanceScheduleDetailPage /> },
