@@ -3,13 +3,54 @@ import { getPaginationParams, paginate } from "../../utils/pagination.js";
 
 export const getAll = async (query: any) => {
   const params = getPaginationParams(query);
+  const { search, status, sortBy = "createdAt", sortOrder = "desc" } = query;
+
+  const where: any = {};
+
+  if (search) {
+    const searchTerms = search.trim().split(/\s+/);
+    where.AND = searchTerms.map((term: string) => {
+      const orConditions: any[] = [
+        { workDescription: { contains: term } },
+        { technician: { fullName: { contains: term } } },
+        { ticket: { title: { contains: term } } },
+      ];
+      
+      const upperTerm = term.toUpperCase();
+      if (upperTerm.startsWith('WO') && !isNaN(Number(upperTerm.slice(2)))) {
+        orConditions.push({ id: Number(upperTerm.slice(2)) });
+      } else if (upperTerm.startsWith('TK') && !isNaN(Number(upperTerm.slice(2)))) {
+        orConditions.push({ ticketId: Number(upperTerm.slice(2)) });
+      } else if (upperTerm.startsWith('WC') && !isNaN(Number(upperTerm.slice(2)))) {
+        orConditions.push({ maintenanceScheduleId: Number(upperTerm.slice(2)) });
+      } else if (upperTerm.startsWith('KTV') && !isNaN(Number(upperTerm.slice(3)))) {
+        orConditions.push({ technicianId: Number(upperTerm.slice(3)) });
+      } else if (!isNaN(Number(term))) {
+        orConditions.push({ id: Number(term) });
+      }
+      return { OR: orConditions };
+    });
+  }
+
+  if (status && status !== "all") {
+    where.status = status;
+  }
+
+  const orderBy: any = {};
+  if (sortBy === "createdAt" || sortBy === "id") {
+    orderBy[sortBy] = sortOrder || "desc";
+  } else {
+    orderBy.createdAt = "desc";
+  }
+
   return paginate(prisma.workOrder, params, {
+    where,
     include: {
       technician: { select: { id: true, fullName: true } },
       ticket: { select: { id: true, title: true } },
       maintenanceSchedule: { select: { id: true, nextMaintenanceDate: true } },
     },
-    orderBy: { createdAt: "desc" },
+    orderBy,
   });
 };
 

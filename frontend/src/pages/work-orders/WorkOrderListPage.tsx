@@ -1,12 +1,15 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/auth.store";
-import { getWorkOrders, updateWorkOrderStatus } from "@/services/work-order.service";
+import { getWorkOrders } from "@/services/work-order.service";
 import { DataTable } from "@/components/DataTable";
 import { usePagination } from "@/hooks/usePagination";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { PlusCircle, Pencil, Trash2 } from "lucide-react";
+import { PlusCircle, Pencil, Trash2, Eye, ArrowUp, ArrowDown } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { WorkOrder } from "@/types/work-order.type";
 import { formatDateTime } from "@/utils/date";
 import CreateWorkOrderModal from "./CreateWorkOrderModal";
@@ -42,10 +45,17 @@ const WorkOrderListPage = () => {
   const [selectedWorkOrder, setSelectedWorkOrder] = useState<WorkOrder | null>(null);
   const { page, pageSize, setPage, setPageSize } = usePagination();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+
+  // Search, filter, sort states
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("pending");
+  const [sortBy, setSortBy] = useState("createdAt");
+  const [sortOrder, setSortOrder] = useState("asc");
 
   const { data, isLoading } = useQuery({
-    queryKey: ["work-orders", page, pageSize],
-    queryFn: () => getWorkOrders(page, pageSize),
+    queryKey: ["work-orders", page, pageSize, search, status, sortBy, sortOrder],
+    queryFn: () => getWorkOrders(page, pageSize, { search, status, sortBy, sortOrder }),
   });
 
   const deleteMutation = useMutation({
@@ -72,7 +82,7 @@ const WorkOrderListPage = () => {
     {
       key: "technician",
       title: "Kỹ thuật viên",
-      render: (_: any, record: WorkOrder) => 
+      render: (_: any, record: WorkOrder) =>
         record.technician ? `KTV${String(record.technician.id).padStart(4, "0")} - ${record.technician.fullName}` : "—",
     },
     {
@@ -120,10 +130,19 @@ const WorkOrderListPage = () => {
       title: "Thao tác",
       render: (_: any, record: WorkOrder) => (
         <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            className="text-primary hover:text-primary"
+            title="Xem chi tiết"
+            onClick={() => navigate(`/work-orders/${record.id}`)}
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
           {isAdmin && (
-            <Button 
-              size="sm" 
-              variant="outline" 
+            <Button
+              size="sm"
+              variant="outline"
               onClick={() => handleEdit(record)}
               disabled={record.status !== "pending"}
               title={record.status !== "pending" ? "Chỉ được sửa khi đang chờ xử lý" : "Sửa"}
@@ -134,8 +153,8 @@ const WorkOrderListPage = () => {
           {isAdmin && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button 
-                  size="sm" 
+                <Button
+                  size="sm"
                   variant="destructive"
                   disabled={record.status !== "pending"}
                   title={record.status !== "pending" ? "Chỉ được xoá khi đang chờ xử lý" : "Xóa"}
@@ -147,12 +166,13 @@ const WorkOrderListPage = () => {
                 <AlertDialogHeader>
                   <AlertDialogTitle>Xác nhận xoá Work Order</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Bạn có chắc chắn muốn xoá Work Order này không? Thao tác này sẽ xoá Work Order và khôi phục trạng thái cho nguồn việc liên quan.
+                    Bạn có chắc chắn muốn xoá Work Order này không? Thao tác này sẽ xoá Work Order và khôi phục trạng
+                    thái cho nguồn việc liên quan.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Hủy</AlertDialogCancel>
-                  <AlertDialogAction 
+                  <AlertDialogAction
                     onClick={() => deleteMutation.mutate(record.id)}
                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                   >
@@ -177,6 +197,57 @@ const WorkOrderListPage = () => {
             Tạo Work Order
           </Button>
         )}
+      </div>
+
+      <div className="bg-muted/50 p-4 rounded-lg flex flex-col lg:flex-row gap-4 items-end">
+        <div className="flex-1 w-full">
+          <label className="text-xs text-muted-foreground mb-1 block">Tìm kiếm</label>
+          <Input
+            placeholder="Tìm theo mã WO, mô tả, KTV, Ticket, Lịch BT..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full h-10 bg-background"
+          />
+        </div>
+        
+        <div className="flex flex-col md:flex-row gap-4 w-full lg:w-auto">
+          <div className="w-full md:w-auto">
+            <label className="text-xs text-muted-foreground mb-1 block">Trạng thái</label>
+            <Select value={status} onValueChange={setStatus}>
+              <SelectTrigger className="w-full md:w-[180px] h-10 bg-background">
+                <SelectValue placeholder="Trạng thái" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                <SelectItem value="pending">Chờ xử lý</SelectItem>
+                <SelectItem value="processing">Đang xử lý</SelectItem>
+                <SelectItem value="completed">Hoàn thành</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="w-full md:w-auto">
+            <label className="text-xs text-muted-foreground mb-1 block">Sắp xếp theo</label>
+            <div className="flex gap-2">
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-full md:w-[180px] h-10 bg-background">
+                  <SelectValue placeholder="Sắp xếp theo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="createdAt">Ngày tạo</SelectItem>
+                  <SelectItem value="id">Mã Work Order</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button 
+                variant="outline" 
+                onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+                className="px-3 bg-background h-10"
+              >
+                {sortOrder === "asc" ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <DataTable

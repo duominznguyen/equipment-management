@@ -165,19 +165,6 @@ const MaintenanceScheduleListPage = () => {
             title: "Thao tác",
             render: (_: any, record: MaintenanceSchedule) => (
               <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="text-primary hover:text-primary"
-                  title="Xem chi tiết"
-                  onClick={() => {
-                    if (isCustomer) navigate(`/my/schedules/${record.id}`);
-                    else if (isAdmin) navigate(`/maintenance-schedules/${record.id}`);
-                    else navigate(`/tech/maintenance-schedules/${record.id}`);
-                  }}
-                >
-                  <Eye className="h-4 w-4" />
-                </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button 
@@ -215,6 +202,20 @@ const MaintenanceScheduleListPage = () => {
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
+
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-primary hover:text-primary"
+                  title="Xem chi tiết"
+                  onClick={() => {
+                    if (isCustomer) navigate(`/my/schedules/${record.id}`);
+                    else if (isAdmin) navigate(`/maintenance-schedules/${record.id}`);
+                    else navigate(`/tech/maintenance-schedules/${record.id}`);
+                  }}
+                >
+                  <Eye className="h-4 w-4" />
+                </Button>
 
                 {isAdmin && (
                   <Button 

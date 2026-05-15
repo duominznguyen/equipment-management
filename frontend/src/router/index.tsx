@@ -15,6 +15,7 @@ import AdminTicketListPage from "@/pages/tickets/AdminTicketListPage";
 import AdminTicketDetailPage from "@/pages/tickets/AdminTicketDetailPage";
 import CustomerTicketListPage from "@/pages/tickets/CustomerTicketListPage";
 import WorkOrderListPage from "@/pages/work-orders/WorkOrderListPage";
+import WorkOrderDetailPage from "@/pages/work-orders/WorkOrderDetailPage";
 import MaintenanceScheduleListPage from "@/pages/maintenance-schedules/MaintenanceScheduleListPage";
 import MaintenanceScheduleDetailPage from "@/pages/maintenance-schedules/MaintenanceScheduleDetailPage";
 import PartListPage from "@/pages/parts/PartListPage";
@@ -64,6 +65,7 @@ const router = createBrowserRouter([
       { path: "tickets", element: <AdminTicketListPage /> },
       { path: "tickets/:id", element: <AdminTicketDetailPage /> },
       { path: "work-orders", element: <WorkOrderListPage /> },
+      { path: "work-orders/:id", element: <WorkOrderDetailPage /> },
       { path: "maintenance-schedules", element: <MaintenanceScheduleListPage /> },
       { path: "maintenance-schedules/:id", element: <MaintenanceScheduleDetailPage /> },
       { path: "parts", element: <PartListPage /> },
@@ -89,6 +91,7 @@ const router = createBrowserRouter([
       // Trang mặc định khi vào /tech
       { index: true, element: <div className="p-4">Chào mừng Kỹ thuật viên!</div> },
       { path: "work-orders", element: <WorkOrderListPage /> },
+      { path: "work-orders/:id", element: <WorkOrderDetailPage /> },
       { path: "maintenance-schedules", element: <MaintenanceScheduleListPage /> },
       { path: "maintenance-schedules/:id", element: <MaintenanceScheduleDetailPage /> },
       { path: "parts", element: <PartListPage /> },
