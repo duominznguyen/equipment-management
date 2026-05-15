@@ -3,7 +3,7 @@ import { AuthRequest } from '../../middlewares/auth.middleware.js'
 import * as Service from './part-exports.service.js'
 
 export const getAll = async (req: AuthRequest, res: Response) => {
-  try { res.json(await Service.getAll(req.query)) }
+  try { res.json(await Service.getAll({ id: req.user!.id, role: req.user!.role }, req.query)) }
   catch (error: any) { res.status(500).json({ message: error.message }) }
 }
 

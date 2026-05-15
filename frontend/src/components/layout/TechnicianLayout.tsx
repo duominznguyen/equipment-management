@@ -40,7 +40,7 @@ const menuItems = [
     icon: <Package size={18} />,
     children: [
       { key: "parts", label: "Danh mục linh kiện", path: "/tech/parts" },
-      { key: "part-exports", label: "Xuất kho", path: "/tech/part-exports" },
+      { key: "part-requests", label: "Lịch sử Yêu cầu", path: "/tech/part-requests" },
     ],
   },
 ];

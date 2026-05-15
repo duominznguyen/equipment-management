@@ -197,6 +197,8 @@ model PartImport {
   importDate DateTime
   totalCost  Decimal  @db.Decimal(18, 2)
   note       String?  @db.NVarChar(255)
+  reason     String?  @db.NVarChar(255)
+  status     String   @default("pending") @db.VarChar(20)
 
   user    User               @relation(fields: [importedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
   details PartImportDetail[]

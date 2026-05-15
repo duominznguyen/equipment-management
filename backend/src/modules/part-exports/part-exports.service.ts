@@ -1,11 +1,17 @@
 import prisma from "../../config/database.js";
 import { getPaginationParams, paginate } from "../../utils/pagination.js";
 
-export const getAll = async (query: any) => {
+export const getAll = async (user: { id: number, role: string }, query: any) => {
   const params = getPaginationParams(query);
   const { search, startDate, endDate, status, creatorRole, sortBy, sortOrder } = query;
 
   const where: any = {};
+
+  if (user.role === 'technician') {
+    const technician = await prisma.technician.findUnique({ where: { userId: user.id } });
+    if (!technician) throw new Error("Không tìm thấy thông tin Kỹ thuật viên");
+    where.technicianId = technician.id;
+  }
 
   if (search) {
     const searchTerms = search.trim().split(/\s+/);
@@ -45,10 +51,12 @@ export const getAll = async (query: any) => {
     where.status = status;
   }
 
-  if (creatorRole === 'admin') {
-    where.technicianId = null;
-  } else if (creatorRole === 'technician') {
-    where.technicianId = { not: null };
+  if (user.role === 'admin') {
+    if (creatorRole === 'admin') {
+      where.technicianId = null;
+    } else if (creatorRole === 'technician') {
+      where.technicianId = { not: null };
+    }
   }
 
   const orderBy: any = {};
@@ -102,12 +110,12 @@ export const create = async (
   }
 
   if (!data.details || data.details.length === 0) throw new Error("Phải có ít nhất một linh kiện");
-  // Kiểm tra tồn kho và số lượng trước
+  // Kiểm tra số lượng và tồn kho (nếu xuất trực tiếp - completed)
   for (const detail of data.details) {
     if (detail.quantity <= 0) throw new Error("Số lượng phải lớn hơn 0");
     const part = await prisma.part.findUnique({ where: { id: detail.partId } });
     if (!part) throw new Error(`Linh kiện ID ${detail.partId} không tồn tại`);
-    if (part.stockQuantity < detail.quantity) {
+    if (status === "completed" && part.stockQuantity < detail.quantity) {
       throw new Error(`Linh kiện "${part.name}" không đủ tồn kho (còn ${part.stockQuantity})`);
     }
   }

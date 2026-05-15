@@ -1,11 +1,15 @@
 import prisma from '../../config/database.js'
 import { getPaginationParams, paginate } from '../../utils/pagination.js'
 
-export const getAll = async (query: any) => {
+export const getAll = async (user: { id: number, role: string }, query: any) => {
   const params = getPaginationParams(query);
   const { search, startDate, endDate, sortBy, sortOrder } = query;
 
   const where: any = {};
+
+  if (user.role === 'technician') {
+    where.importedBy = user.id;
+  }
 
   if (search) {
     const searchTerms = search.trim().split(/\s+/);
@@ -14,8 +18,12 @@ export const getAll = async (query: any) => {
       const orConditions: any[] = [
         { supplier: { contains: term } },
         { note: { contains: term } },
+        { reason: { contains: term } },
       ];
-      if (isNumeric) {
+      // Parse PN0001 for ID
+      if (term.toUpperCase().startsWith('PN') && !isNaN(Number(term.slice(2)))) {
+        orConditions.push({ id: Number(term.slice(2)) });
+      } else if (isNumeric) {
         orConditions.push({ id: Number(term) });
       }
       return { OR: orConditions };
@@ -61,7 +69,7 @@ export const getById = async (id: number) => {
   return partImport
 }
 
-export const create = async (userId: number, data: {
+export const create = async (user: { id: number, role: string }, data: {
   supplier: string
   importDate: string; note?: string
   details: { partId: number; quantity: number; unitPrice: number }[]
@@ -73,15 +81,17 @@ export const create = async (userId: number, data: {
   }
 
   const totalCost = data.details.reduce((sum, d) => sum + d.quantity * d.unitPrice, 0)
+  const status = user.role === "technician" ? "pending" : "completed";
 
   return prisma.$transaction(async (tx) => {
     const partImport = await tx.partImport.create({
       data: {
-        importedBy: userId,
+        importedBy: user.id,
         supplier: data.supplier,
         importDate: new Date(data.importDate),
         totalCost,
         note: data.note,
+        status,
         details: {
           create: data.details.map(d => ({
             partId: d.partId,
@@ -96,17 +106,53 @@ export const create = async (userId: number, data: {
       }
     })
 
-    // Cập nhật tồn kho
-    for (const detail of data.details) {
-      await tx.part.update({
-        where: { id: detail.partId },
-        data: { stockQuantity: { increment: detail.quantity } }
-      })
+    if (status === "completed") {
+      // Cập nhật tồn kho
+      for (const detail of data.details) {
+        await tx.part.update({
+          where: { id: detail.partId },
+          data: { stockQuantity: { increment: detail.quantity } }
+        })
+      }
     }
 
     return partImport
   })
 }
+
+export const updateStatus = async (id: number, status: string, rejectReason?: string) => {
+  const partImport = await prisma.partImport.findUnique({
+    where: { id },
+    include: { details: true }
+  });
+  if (!partImport) throw new Error("Phiếu nhập không tồn tại");
+  if (partImport.status !== "pending") {
+    throw new Error("Chỉ có thể duyệt phiếu đang ở trạng thái chờ");
+  }
+
+  return prisma.$transaction(async (tx) => {
+    if (status === "completed" || status === "approved") {
+      // Cộng tồn kho
+      for (const detail of partImport.details) {
+        await tx.part.update({
+          where: { id: detail.partId },
+          data: { stockQuantity: { increment: detail.quantity } },
+        });
+      }
+      status = "completed"; // chuẩn hóa
+    }
+
+    let updatedReason = partImport.reason;
+    if (status === "cancelled" && rejectReason) {
+      updatedReason = updatedReason ? `${updatedReason} | Từ chối vì: ${rejectReason}` : `Từ chối vì: ${rejectReason}`;
+    }
+
+    return tx.partImport.update({
+      where: { id },
+      data: { status, reason: updatedReason },
+    });
+  });
+};
 
 export const update = async (id: number, data: { supplier?: string; note?: string }) => {
   const partImport = await prisma.partImport.findUnique({ where: { id } });
@@ -129,21 +175,23 @@ export const remove = async (id: number) => {
   if (!partImport) throw new Error('Phiếu nhập không tồn tại');
 
   return prisma.$transaction(async (tx) => {
-    // Kiểm tra tồn kho trước khi xóa
-    for (const detail of partImport.details) {
-      const part = await tx.part.findUnique({ where: { id: detail.partId } });
-      if (!part) throw new Error(`Linh kiện ID ${detail.partId} không tồn tại`);
-      if (part.stockQuantity < detail.quantity) {
-        throw new Error(`Không thể xóa: Số lượng tồn kho hiện tại của linh kiện "${part.name}" (${part.stockQuantity}) nhỏ hơn số lượng nhập (${detail.quantity}).`);
+    if (partImport.status === "completed" || partImport.status === "approved") {
+      // Kiểm tra tồn kho trước khi xóa
+      for (const detail of partImport.details) {
+        const part = await tx.part.findUnique({ where: { id: detail.partId } });
+        if (!part) throw new Error(`Linh kiện ID ${detail.partId} không tồn tại`);
+        if (part.stockQuantity < detail.quantity) {
+          throw new Error(`Không thể xóa: Số lượng tồn kho hiện tại của linh kiện "${part.name}" (${part.stockQuantity}) nhỏ hơn số lượng nhập (${detail.quantity}).`);
+        }
       }
-    }
 
-    // Giảm tồn kho
-    for (const detail of partImport.details) {
-      await tx.part.update({
-        where: { id: detail.partId },
-        data: { stockQuantity: { decrement: detail.quantity } }
-      });
+      // Giảm tồn kho
+      for (const detail of partImport.details) {
+        await tx.part.update({
+          where: { id: detail.partId },
+          data: { stockQuantity: { decrement: detail.quantity } }
+        });
+      }
     }
 
     // Xóa chi tiết và phiếu nhập
